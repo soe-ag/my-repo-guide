@@ -224,7 +224,57 @@ export const analyzeRepo = action({
         model: args.model,
       })
 
-      // Done!
+      // Done — auto-save combined analysis
+      const { ANALYSIS_LABELS } = await import('../lib/prompts')
+      const allResults: Record<string, string> = {
+        techStack: techStackResult,
+        dataModel: dataModelResult,
+        routes: routesResult,
+        architecture: patternsResult,
+        patterns: patternsResult,
+        learningPath: learningPathResult,
+      }
+      const combinedLines = [
+        `# RepoGuide Analysis: ${repo.owner}/${repo.name}`,
+        `> ${repo.repoUrl}`,
+        `> Generated on ${new Date().toLocaleDateString()} using ${args.model}`,
+        '',
+      ]
+      const order = [
+        'techStack',
+        'structure',
+        'architecture',
+        'routes',
+        'dataModel',
+        'patterns',
+        'learningPath',
+      ] as const
+      for (const type of order) {
+        const content = allResults[type]
+        if (content) {
+          const label = ANALYSIS_LABELS[type]
+          combinedLines.push(`---\n\n## ${label}\n`)
+          combinedLines.push(content)
+          combinedLines.push('')
+        }
+      }
+      const combinedMarkdown = combinedLines.join('\n')
+
+      // Generate unique slug
+      const slug: string = await ctx.runQuery(api.savedAnalyses.generateSlug, {
+        owner: repo.owner,
+        name: repo.name,
+      })
+
+      await ctx.runMutation(api.savedAnalyses.create, {
+        repoUrl: repo.repoUrl,
+        owner: repo.owner,
+        name: repo.name,
+        slug,
+        model: args.model,
+        content: combinedMarkdown,
+      })
+
       await ctx.runMutation(api.repos.updateStatus, {
         repoId: args.repoId,
         status: 'done',

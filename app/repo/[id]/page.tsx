@@ -2,7 +2,7 @@
 
 import { useQuery, useAction, useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Id } from '@/convex/_generated/dataModel'
 import { AnalysisProgress } from '@/components/analysis-progress'
@@ -26,6 +26,7 @@ import Link from 'next/link'
 export default function RepoPage() {
   const params = useParams<{ id: string }>()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const repoId = params.id as Id<'repos'>
   const initialModel = searchParams.get('model') || OPENROUTER_MODELS[0].id
   const [reAnalyzeModel, setReAnalyzeModel] = useState(initialModel)
@@ -33,6 +34,10 @@ export default function RepoPage() {
 
   const repo = useQuery(api.repos.get, { repoId })
   const analyses = useQuery(api.analyses.getByRepo, { repoId })
+  const latestSaved = useQuery(
+    api.savedAnalyses.getLatestByRepo,
+    repo ? { owner: repo.owner, name: repo.name } : 'skip'
+  )
 
   const fetchRepo = useAction(api.github.fetchRepo)
   const analyzeRepo = useAction(api.analyze.analyzeRepo)
@@ -71,6 +76,13 @@ export default function RepoPage() {
       startPipeline(initialModel)
     }
   }, [repo, initialModel, startPipeline])
+
+  // Auto-redirect to saved analysis page when done
+  useEffect(() => {
+    if (repo?.status === 'done' && latestSaved?.slug) {
+      router.replace(`/analysis/${latestSaved.slug}`)
+    }
+  }, [repo?.status, latestSaved?.slug, router])
 
   async function handleReAnalyze() {
     if (!repo) return

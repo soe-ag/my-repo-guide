@@ -35,4 +35,16 @@ export default defineSchema({
     model: v.string(),
     createdAt: v.number(),
   }).index('by_repoId', ['repoId']),
+
+  savedAnalyses: defineTable({
+    repoUrl: v.string(),
+    owner: v.string(),
+    name: v.string(),
+    slug: v.string(),
+    model: v.string(),
+    content: v.string(),
+    createdAt: v.number(),
+  })
+    .index('by_slug', ['slug'])
+    .index('by_createdAt', ['createdAt']),
 })

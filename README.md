@@ -78,8 +78,20 @@ This starts both Next.js and Convex dev servers. Open [http://localhost:3000](ht
 1. Paste a GitHub repo URL (e.g. `https://github.com/vercel/next.js`) or shorthand (`vercel/next.js`)
 2. Pick an AI model from the dropdown
 3. Click **Analyze** — watch real-time progress as each step completes
-4. Browse results in tabs, copy to clipboard, or export as `.md`
-5. Re-analyze with a different model anytime (cached repo data is reused)
+4. When done, the analysis is **auto-saved** and you're redirected to a permanent page with sidebar navigation
+5. Browse the analysis by section using the sidebar — headings are extracted from the markdown output
+6. View all saved analyses from the home page, click any to revisit
+7. One repo can have **multiple analyses** (different models, re-runs) — each gets a unique URL
+8. Delete any saved analysis via the delete button (with confirmation dialog)
+9. Export the full analysis as a `.md` file from the results page
+
+### Routes
+
+| Route              | Description                                            |
+| ------------------ | ------------------------------------------------------ |
+| `/`                | Home — submit repos, view saved & in-progress analyses |
+| `/repo/[id]`       | Live analysis progress (auto-redirects when done)      |
+| `/analysis/[slug]` | Saved analysis with sidebar navigation                 |
 
 ## Supported AI Models
 
