@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RepoGuide
 
-## Getting Started
+A web app that takes a GitHub repo URL, fetches its contents, and generates a comprehensive learning guide using AI. Built with Next.js, Convex, and OpenRouter.
 
-First, run the development server:
+## What It Does
+
+Paste any GitHub repo URL and get:
+
+- **Project Structure Map** — folder purposes, key files
+- **Tech Stack Summary** — frameworks, DB, auth, styling (auto-detected)
+- **Architecture Overview** — how frontend, backend, and DB connect
+- **Route / Page Map** — every page and endpoint
+- **Data Model / Schema** — tables, fields, relationships
+- **Key Patterns & Conventions** — auth guards, data fetching, naming
+- **Ordered Learning Path** — "read X then Y because Y depends on X"
+
+## Setup
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Set up Convex
+
+If you haven't already, initialize Convex:
+
+```bash
+npx convex dev
+```
+
+This creates `.env.local` with your `CONVEX_DEPLOYMENT` and `NEXT_PUBLIC_CONVEX_URL`.
+
+### 3. Get an OpenRouter API key
+
+1. Go to [openrouter.ai](https://openrouter.ai/)
+2. Sign up / log in
+3. Navigate to **Keys** → **Create Key**
+4. Copy the key (starts with `sk-or-...`)
+
+### 4. Set environment variables in Convex
+
+The OpenRouter key and GitHub token are used server-side in Convex actions, so they must be set as **Convex environment variables** (not in `.env.local`).
+
+Open the Convex dashboard:
+
+```bash
+npx convex dashboard
+```
+
+Then go to **Settings → Environment Variables** and add:
+
+| Variable              | Required | Description                                                                    |
+| --------------------- | -------- | ------------------------------------------------------------------------------ |
+| `OPENROUTER_API_KEY`  | Yes      | Your OpenRouter API key (`sk-or-...`)                                          |
+| `GITHUB_ACCESS_TOKEN` | No       | GitHub personal access token — needed for private repos and higher rate limits |
+
+#### Getting a GitHub Personal Access Token (optional)
+
+1. Go to [github.com/settings/tokens](https://github.com/settings/tokens)
+2. Click **Generate new token (classic)**
+3. Select scope: `repo` (for private repo access)
+4. Copy the token and add it as `GITHUB_ACCESS_TOKEN` in Convex
+
+Without a token, only public repos can be analyzed and you're limited to 60 GitHub API requests/hour. With a token, you get 5,000 req/hr.
+
+### 5. Run the dev servers
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This starts both Next.js and Convex dev servers. Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Paste a GitHub repo URL (e.g. `https://github.com/vercel/next.js`) or shorthand (`vercel/next.js`)
+2. Pick an AI model from the dropdown
+3. Click **Analyze** — watch real-time progress as each step completes
+4. Browse results in tabs, copy to clipboard, or export as `.md`
+5. Re-analyze with a different model anytime (cached repo data is reused)
 
-## Learn More
+## Supported AI Models
 
-To learn more about Next.js, take a look at the following resources:
+Models are routed through [OpenRouter](https://openrouter.ai/), so cost and availability depend on your OpenRouter account:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Claude Sonnet 4
+- GPT-4o
+- Gemini 2.5 Pro
+- DeepSeek V3
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech Stack
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Frontend**: Next.js, Tailwind CSS, shadcn/ui
+- **Backend**: Convex (real-time database + serverless functions)
+- **AI**: OpenRouter API
+- **GitHub**: REST API v3 for repo fetching
