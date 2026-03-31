@@ -1,65 +1,95 @@
-import Image from "next/image";
+'use client'
+
+import { useQuery } from 'convex/react'
+import { api } from '@/convex/_generated/api'
+import { RepoInput } from '@/components/repo-input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { GitBranch, Clock, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
+
+function StatusBadge({ status }: { status: string }) {
+  const variant = status === 'done' ? 'default' : status === 'error' ? 'destructive' : 'secondary'
+  return <Badge variant={variant}>{status}</Badge>
+}
+
+function RepoList() {
+  const repos = useQuery(api.repos.list)
+
+  if (repos === undefined) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-20 w-full rounded-lg" />
+        ))}
+      </div>
+    )
+  }
+
+  if (repos.length === 0) {
+    return (
+      <p className="text-muted-foreground py-8 text-center text-sm">
+        No repositories analyzed yet. Enter a GitHub URL above to get started.
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {repos.map((repo) => (
+        <Link key={repo._id} href={`/repo/${repo._id}`}>
+          <Card className="transition-colors hover:bg-accent/50 cursor-pointer">
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <GitBranch className="text-muted-foreground h-5 w-5" />
+                <div>
+                  <p className="font-medium">
+                    {repo.owner}/{repo.name}
+                  </p>
+                  <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                    <Clock className="h-3 w-3" />
+                    {new Date(repo.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <StatusBadge status={repo.status} />
+                <ExternalLink className="text-muted-foreground h-4 w-4" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      ))}
+    </div>
+  )
+}
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="flex flex-1 flex-col items-center bg-background">
+      <main className="flex w-full max-w-2xl flex-col gap-8 px-4 py-16 sm:px-6 sm:py-24">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">RepoGuide</h1>
+          <p className="text-muted-foreground text-lg">
+            Analyze any GitHub repo and generate a comprehensive learning guide with AI.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Analyze a Repository</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RepoInput />
+          </CardContent>
+        </Card>
+
+        <div>
+          <h2 className="mb-4 text-lg font-semibold">Past Analyses</h2>
+          <RepoList />
         </div>
       </main>
     </div>
-  );
+  )
 }
