@@ -149,8 +149,8 @@ export const analyzeRepo = action({
     model: v.string(),
   },
   handler: async (ctx, args) => {
-    const apiKey = process.env.OPENROUTER_API_KEY
-    if (!apiKey) {
+    const apiKeyRaw = process.env.OPENROUTER_API_KEY
+    if (!apiKeyRaw) {
       await ctx.runMutation(api.repos.updateStatus, {
         repoId: args.repoId,
         status: 'error',
@@ -158,6 +158,7 @@ export const analyzeRepo = action({
       })
       return
     }
+    const apiKey: string = apiKeyRaw
 
     const repo = await ctx.runQuery(api.repos.get, { repoId: args.repoId })
     if (!repo) {
@@ -213,8 +214,7 @@ export const analyzeRepo = action({
         packageJson,
         truncateFiles(configFiles, 30000)
       )
-      const techStackResult = await callOpenRouter(techStackPrompt, effectiveModel, apiKey)
-      if (usingFreeRouter) await ctx.runMutation(api.freeUsage.increment, {})
+      const techStackResult = await callAndTrack(techStackPrompt)
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
@@ -234,8 +234,7 @@ export const analyzeRepo = action({
 
       const { buildDataModelPrompt } = await import('../lib/prompts')
       const dataModelPrompt = buildDataModelPrompt(truncateFiles(schemaFiles, 40000), fileTreeStr)
-      const dataModelResult = await callOpenRouter(dataModelPrompt, effectiveModel, apiKey)
-      if (usingFreeRouter) await ctx.runMutation(api.freeUsage.increment, {})
+      const dataModelResult = await callAndTrack(dataModelPrompt)
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
@@ -249,8 +248,7 @@ export const analyzeRepo = action({
 
       const { buildRoutesPrompt } = await import('../lib/prompts')
       const routesPrompt = buildRoutesPrompt(truncateFiles(routeFiles, 50000), fileTreeStr)
-      const routesResult = await callOpenRouter(routesPrompt, effectiveModel, apiKey)
-      if (usingFreeRouter) await ctx.runMutation(api.freeUsage.increment, {})
+      const routesResult = await callAndTrack(routesPrompt)
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
@@ -269,8 +267,7 @@ export const analyzeRepo = action({
 
       const { buildPatternsPrompt } = await import('../lib/prompts')
       const patternsPrompt = buildPatternsPrompt(truncateFiles(allSourceFiles, 60000), fileTreeStr)
-      const patternsResult = await callOpenRouter(patternsPrompt, effectiveModel, apiKey)
-      if (usingFreeRouter) await ctx.runMutation(api.freeUsage.increment, {})
+      const patternsResult = await callAndTrack(patternsPrompt)
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
@@ -293,8 +290,7 @@ export const analyzeRepo = action({
         routesResult,
         patternsResult
       )
-      const learningPathResult = await callOpenRouter(learningPathPrompt, effectiveModel, apiKey)
-      if (usingFreeRouter) await ctx.runMutation(api.freeUsage.increment, {})
+      const learningPathResult = await callAndTrack(learningPathPrompt)
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
