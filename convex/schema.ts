@@ -47,4 +47,11 @@ export default defineSchema({
   })
     .index('by_slug', ['slug'])
     .index('by_createdAt', ['createdAt']),
+
+  // Tracks daily OpenRouter free-router API call counts.
+  // 'date' is YYYY-MM-DD in UTC; 'count' is the number of API calls made that day.
+  freeUsage: defineTable({
+    date: v.string(),
+    count: v.number(),
+  }).index('by_date', ['date']),
 })

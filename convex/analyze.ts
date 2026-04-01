@@ -3,6 +3,7 @@
 import { v } from 'convex/values'
 import { action } from './_generated/server'
 import { api } from './_generated/api'
+import { FREE_MODELS_ROUTER_ID } from '../lib/prompts'
 
 const SCHEMA_PATTERNS = [
   /schema\.(ts|js|prisma)$/,
@@ -70,6 +71,31 @@ function truncateFiles(
 }
 
 async function callOpenRouter(prompt: string, model: string, apiKey: string): Promise<string> {
+  const isFreeRouter = !model || model === FREE_MODELS_ROUTER_ID
+  const effectiveModel = isFreeRouter ? FREE_MODELS_ROUTER_ID : model
+
+  // Build request body: for paid models, add free router as fallback
+  const requestBody: Record<string, unknown> = {
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are an expert software architect analyzing a GitHub repository. Provide detailed, structured analysis in Markdown format. Be specific — reference actual file names, function names, and code patterns.',
+      },
+      { role: 'user', content: prompt },
+    ],
+    max_tokens: 4096,
+    temperature: 0.3,
+  }
+
+  if (isFreeRouter) {
+    requestBody.model = FREE_MODELS_ROUTER_ID
+  } else {
+    // Use selected model with free router as fallback
+    requestBody.models = [effectiveModel, FREE_MODELS_ROUTER_ID]
+    requestBody.route = 'fallback'
+  }
+
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -78,19 +104,7 @@ async function callOpenRouter(prompt: string, model: string, apiKey: string): Pr
       'HTTP-Referer': 'https://repo-guide.vercel.app',
       'X-Title': 'RepoGuide',
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert software architect analyzing a GitHub repository. Provide detailed, structured analysis in Markdown format. Be specific — reference actual file names, function names, and code patterns.',
-        },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: 4096,
-      temperature: 0.3,
-    }),
+    body: JSON.stringify(requestBody),
   })
 
   if (!res.ok) {
@@ -123,6 +137,11 @@ export const analyzeRepo = action({
       return
     }
 
+    // Resolve effective model: empty string → free models router
+    const effectiveModel =
+      !args.model || args.model === FREE_MODELS_ROUTER_ID ? FREE_MODELS_ROUTER_ID : args.model
+    const usingFreeRouter = effectiveModel === FREE_MODELS_ROUTER_ID
+
     const fileTree: string[] = JSON.parse(repo.fileTree)
     const fetchedFiles: Record<string, string> = JSON.parse(repo.fetchedFiles)
     const fileTreeStr = fileTree.join('\n')
@@ -139,19 +158,20 @@ export const analyzeRepo = action({
         packageJson,
         truncateFiles(configFiles, 30000)
       )
-      const techStackResult = await callOpenRouter(techStackPrompt, args.model, apiKey)
+      const techStackResult = await callOpenRouter(techStackPrompt, effectiveModel, apiKey)
+      if (usingFreeRouter) await ctx.runMutation(api.freeUsage.increment, {})
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
         type: 'techStack',
         content: techStackResult,
-        model: args.model,
+        model: effectiveModel,
       })
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
         type: 'structure',
         content: techStackResult,
-        model: args.model,
+        model: effectiveModel,
       })
 
       // Step 2: Data Model
@@ -159,13 +179,14 @@ export const analyzeRepo = action({
 
       const { buildDataModelPrompt } = await import('../lib/prompts')
       const dataModelPrompt = buildDataModelPrompt(truncateFiles(schemaFiles, 40000), fileTreeStr)
-      const dataModelResult = await callOpenRouter(dataModelPrompt, args.model, apiKey)
+      const dataModelResult = await callOpenRouter(dataModelPrompt, effectiveModel, apiKey)
+      if (usingFreeRouter) await ctx.runMutation(api.freeUsage.increment, {})
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
         type: 'dataModel',
         content: dataModelResult,
-        model: args.model,
+        model: effectiveModel,
       })
 
       // Step 3: Routes
@@ -173,13 +194,14 @@ export const analyzeRepo = action({
 
       const { buildRoutesPrompt } = await import('../lib/prompts')
       const routesPrompt = buildRoutesPrompt(truncateFiles(routeFiles, 50000), fileTreeStr)
-      const routesResult = await callOpenRouter(routesPrompt, args.model, apiKey)
+      const routesResult = await callOpenRouter(routesPrompt, effectiveModel, apiKey)
+      if (usingFreeRouter) await ctx.runMutation(api.freeUsage.increment, {})
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
         type: 'routes',
         content: routesResult,
-        model: args.model,
+        model: effectiveModel,
       })
 
       // Step 4: Patterns + Architecture
@@ -192,19 +214,20 @@ export const analyzeRepo = action({
 
       const { buildPatternsPrompt } = await import('../lib/prompts')
       const patternsPrompt = buildPatternsPrompt(truncateFiles(allSourceFiles, 60000), fileTreeStr)
-      const patternsResult = await callOpenRouter(patternsPrompt, args.model, apiKey)
+      const patternsResult = await callOpenRouter(patternsPrompt, effectiveModel, apiKey)
+      if (usingFreeRouter) await ctx.runMutation(api.freeUsage.increment, {})
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
         type: 'architecture',
         content: patternsResult,
-        model: args.model,
+        model: effectiveModel,
       })
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
         type: 'patterns',
         content: patternsResult,
-        model: args.model,
+        model: effectiveModel,
       })
 
       // Step 5: Learning Path (synthesis)
@@ -215,13 +238,14 @@ export const analyzeRepo = action({
         routesResult,
         patternsResult
       )
-      const learningPathResult = await callOpenRouter(learningPathPrompt, args.model, apiKey)
+      const learningPathResult = await callOpenRouter(learningPathPrompt, effectiveModel, apiKey)
+      if (usingFreeRouter) await ctx.runMutation(api.freeUsage.increment, {})
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
         type: 'learningPath',
         content: learningPathResult,
-        model: args.model,
+        model: effectiveModel,
       })
 
       // Done — auto-save combined analysis
@@ -237,7 +261,7 @@ export const analyzeRepo = action({
       const combinedLines = [
         `# RepoGuide Analysis: ${repo.owner}/${repo.name}`,
         `> ${repo.repoUrl}`,
-        `> Generated on ${new Date().toLocaleDateString()} using ${args.model}`,
+        `> Generated on ${new Date().toLocaleDateString()} using ${effectiveModel}`,
         '',
       ]
       const order = [
@@ -271,7 +295,7 @@ export const analyzeRepo = action({
         owner: repo.owner,
         name: repo.name,
         slug,
-        model: args.model,
+        model: effectiveModel,
         content: combinedMarkdown,
       })
 
