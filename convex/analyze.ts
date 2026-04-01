@@ -70,6 +70,17 @@ function truncateFiles(
   return result
 }
 
+function getUsableFiles(files: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(files).filter(([, content]) => {
+      const trimmed = content.trim()
+      if (!trimmed) return false
+      if (trimmed.startsWith('// Failed to fetch')) return false
+      return true
+    })
+  )
+}
+
 async function callOpenRouter(prompt: string, model: string, apiKey: string): Promise<string> {
   const isFreeRouter = !model || model === FREE_MODELS_ROUTER_ID
   const effectiveModel = isFreeRouter ? FREE_MODELS_ROUTER_ID : model
@@ -143,8 +154,21 @@ export const analyzeRepo = action({
     const usingFreeRouter = effectiveModel === FREE_MODELS_ROUTER_ID
 
     const fileTree: string[] = JSON.parse(repo.fileTree)
-    const fetchedFiles: Record<string, string> = JSON.parse(repo.fetchedFiles)
+    const rawFetchedFiles: Record<string, string> = JSON.parse(repo.fetchedFiles)
+    const fetchedFiles = getUsableFiles(rawFetchedFiles)
     const fileTreeStr = fileTree.join('\n')
+
+    const fetchedCount = Object.keys(fetchedFiles).length
+    if (fileTree.length === 0 || fetchedCount < 8) {
+      await ctx.runMutation(api.repos.updateStatus, {
+        repoId: args.repoId,
+        status: 'error',
+        errorMessage:
+          'Insufficient repository data to analyze. GitHub fetch returned too few usable files. ' +
+          'Please retry, ensure GitHub token access is configured, or choose a smaller/public repository.',
+      })
+      return
+    }
 
     try {
       // Step 1: Tech Stack + Structure

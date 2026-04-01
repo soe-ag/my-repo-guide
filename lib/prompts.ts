@@ -203,6 +203,7 @@ export const FREE_DAILY_LIMIT = 50
 
 export const OPENROUTER_MODELS = [
   { id: FREE_MODELS_ROUTER_ID, name: 'Free Models (Auto)' },
+  { id: 'qwen/qwen3.6-plus-preview:free', name: 'Qwen 3.6 Plus Preview (Free)' },
   { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4' },
   { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
   { id: 'openai/gpt-4o', name: 'GPT-4o' },
