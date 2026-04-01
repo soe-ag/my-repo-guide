@@ -197,7 +197,14 @@ Generate an **Ordered Learning Path** in Markdown:
 Make this practical and actionable — a developer should be able to follow this guide and understand the entire codebase.`
 }
 
+export { FREE_MODELS_ROUTER_ID, FREE_DAILY_LIMIT } from './constants'
+
+// Re-import for local use in OPENROUTER_MODELS
+import { FREE_MODELS_ROUTER_ID as _FREE_ID } from './constants'
+
 export const OPENROUTER_MODELS = [
+  { id: _FREE_ID, name: 'Free Models (Auto)' },
+  { id: 'qwen/qwen3.6-plus-preview:free', name: 'Qwen 3.6 Plus Preview (Free)' },
   { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4' },
   { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
   { id: 'openai/gpt-4o', name: 'GPT-4o' },

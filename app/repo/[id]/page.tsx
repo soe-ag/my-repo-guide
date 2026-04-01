@@ -17,9 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { OPENROUTER_MODELS } from '@/lib/prompts'
+import { OPENROUTER_MODELS, FREE_MODELS_ROUTER_ID, FREE_DAILY_LIMIT } from '@/lib/prompts'
 import type { AnalysisType } from '@/lib/prompts'
-import { ArrowLeft, Download, ExternalLink, RefreshCw, Copy, Check } from 'lucide-react'
+import { ArrowLeft, Download, ExternalLink, RefreshCw, Copy, Check, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -28,7 +28,7 @@ export default function RepoPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const repoId = params.id as Id<'repos'>
-  const initialModel = searchParams.get('model') || OPENROUTER_MODELS[0].id
+  const initialModel = searchParams.get('model') || FREE_MODELS_ROUTER_ID
   const [reAnalyzeModel, setReAnalyzeModel] = useState(initialModel)
   const [copied, setCopied] = useState(false)
 
@@ -38,6 +38,7 @@ export default function RepoPage() {
     api.savedAnalyses.getLatestByRepo,
     repo ? { owner: repo.owner, name: repo.name } : 'skip'
   )
+  const todayFreeCount = useQuery(api.freeUsage.getTodayCount)
 
   const fetchRepo = useAction(api.github.fetchRepo)
   const analyzeRepo = useAction(api.analyze.analyzeRepo)
@@ -246,18 +247,26 @@ export default function RepoPage() {
         <Card className="mb-6">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
             <span className="text-sm font-medium">Re-analyze with:</span>
-            <Select value={reAnalyzeModel} onValueChange={setReAnalyzeModel}>
-              <SelectTrigger className="w-full sm:w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {OPENROUTER_MODELS.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-1 flex-col gap-1">
+              <Select value={reAnalyzeModel} onValueChange={setReAnalyzeModel}>
+                <SelectTrigger className="w-full sm:w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {OPENROUTER_MODELS.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {reAnalyzeModel === FREE_MODELS_ROUTER_ID && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Zap className="h-3 w-3" />
+                  {todayFreeCount ?? '…'}/{FREE_DAILY_LIMIT} free requests used today
+                </span>
+              )}
+            </div>
             <Button variant="outline" size="sm" onClick={handleReAnalyze}>
               <RefreshCw className="mr-1 h-4 w-4" />
               Re-analyze

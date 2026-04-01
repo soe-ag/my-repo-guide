@@ -10,6 +10,7 @@
 
 import type * as analyses from "../analyses.js";
 import type * as analyze from "../analyze.js";
+import type * as freeUsage from "../freeUsage.js";
 import type * as github from "../github.js";
 import type * as repos from "../repos.js";
 import type * as savedAnalyses from "../savedAnalyses.js";
@@ -23,6 +24,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   analyses: typeof analyses;
   analyze: typeof analyze;
+  freeUsage: typeof freeUsage;
   github: typeof github;
   repos: typeof repos;
   savedAnalyses: typeof savedAnalyses;
