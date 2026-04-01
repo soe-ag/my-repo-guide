@@ -9,11 +9,11 @@ export const getTodayCount = query({
   args: {},
   handler: async (ctx) => {
     const today = getTodayDateUTC()
-    const record = await ctx.db
+    const records = await ctx.db
       .query('freeUsage')
       .withIndex('by_date', (q) => q.eq('date', today))
-      .first()
-    return record?.count ?? 0
+      .collect()
+    return records.reduce((sum, r) => sum + r.count, 0)
   },
 })
 

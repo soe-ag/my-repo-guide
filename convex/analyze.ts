@@ -3,7 +3,7 @@
 import { v } from 'convex/values'
 import { action } from './_generated/server'
 import { api } from './_generated/api'
-import { FREE_MODELS_ROUTER_ID } from '../lib/prompts'
+import { FREE_MODELS_ROUTER_ID } from '../lib/constants'
 
 const SCHEMA_PATTERNS = [
   /schema\.(ts|js|prisma)$/,
@@ -81,7 +81,16 @@ function getUsableFiles(files: Record<string, string>): Record<string, string> {
   )
 }
 
-async function callOpenRouter(prompt: string, model: string, apiKey: string): Promise<string> {
+interface OpenRouterResult {
+  content: string
+  usedFreeRouter: boolean
+}
+
+async function callOpenRouter(
+  prompt: string,
+  model: string,
+  apiKey: string
+): Promise<OpenRouterResult> {
   const isFreeRouter = !model || model === FREE_MODELS_ROUTER_ID
   const effectiveModel = isFreeRouter ? FREE_MODELS_ROUTER_ID : model
 
@@ -124,7 +133,14 @@ async function callOpenRouter(prompt: string, model: string, apiKey: string): Pr
   }
 
   const data = await res.json()
-  return data.choices?.[0]?.message?.content || 'No response generated.'
+  const content: string = data.choices?.[0]?.message?.content || 'No response generated.'
+
+  // Detect whether the free router was actually used (direct or via fallback)
+  const actualModel: string = data.model ?? ''
+  const usedFreeRouter =
+    isFreeRouter || actualModel === FREE_MODELS_ROUTER_ID || actualModel.endsWith(':free')
+
+  return { content, usedFreeRouter }
 }
 
 export const analyzeRepo = action({
@@ -151,7 +167,22 @@ export const analyzeRepo = action({
     // Resolve effective model: empty string → free models router
     const effectiveModel =
       !args.model || args.model === FREE_MODELS_ROUTER_ID ? FREE_MODELS_ROUTER_ID : args.model
-    const usingFreeRouter = effectiveModel === FREE_MODELS_ROUTER_ID
+
+    // Helper: call OpenRouter and increment free-usage counter.
+    // Increments BEFORE the call so attempts are tracked even on failure.
+    // Also tracks when a paid-model request falls back to the free router.
+    async function callAndTrack(prompt: string): Promise<string> {
+      const isFreeRouter = effectiveModel === FREE_MODELS_ROUTER_ID
+      if (isFreeRouter) {
+        await ctx.runMutation(api.freeUsage.increment, {})
+      }
+      const result = await callOpenRouter(prompt, effectiveModel, apiKey)
+      // If paid model fell back to free router, also count that usage
+      if (!isFreeRouter && result.usedFreeRouter) {
+        await ctx.runMutation(api.freeUsage.increment, {})
+      }
+      return result.content
+    }
 
     const fileTree: string[] = JSON.parse(repo.fileTree)
     const rawFetchedFiles: Record<string, string> = JSON.parse(repo.fetchedFiles)
