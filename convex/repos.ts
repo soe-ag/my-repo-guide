@@ -83,3 +83,19 @@ export const listInProgress = query({
     return repos.filter((repo) => repo.status === 'fetching' || repo.status === 'analyzing')
   },
 })
+
+export const remove = mutation({
+  args: { repoId: v.id('repos') },
+  handler: async (ctx, args) => {
+    const analyses = await ctx.db
+      .query('analyses')
+      .withIndex('by_repoId', (q) => q.eq('repoId', args.repoId))
+      .collect()
+
+    for (const analysis of analyses) {
+      await ctx.db.delete(analysis._id)
+    }
+
+    await ctx.db.delete(args.repoId)
+  },
+})

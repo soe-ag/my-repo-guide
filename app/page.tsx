@@ -22,6 +22,18 @@ function StatusBadge({ status }: { status: string }) {
 
 function RepoList() {
   const repos = useQuery(api.repos.listInProgress)
+  const removeRepo = useMutation(api.repos.remove)
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: Id<'repos'>
+    name: string
+  } | null>(null)
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    await removeRepo({ repoId: deleteTarget.id })
+    toast.success('In-progress analysis deleted')
+    setDeleteTarget(null)
+  }
 
   if (repos === undefined) {
     return (
@@ -42,17 +54,20 @@ function RepoList() {
   }
 
   return (
-    <div className="space-y-3">
-      {repos.map((repo) => (
-        <Link key={repo._id} href={`/repo/${repo._id}`}>
-          <Card className="transition-colors hover:bg-accent/50 cursor-pointer">
-            <CardContent className="flex items-center justify-between p-4">
+    <>
+      <div className="space-y-3">
+        {repos.map((repo) => (
+          <Card key={repo._id} className="transition-colors hover:bg-accent/50">
+            <CardContent className="flex items-center justify-between px-4">
               <div className="flex items-center gap-3">
                 <GitBranch className="text-muted-foreground h-5 w-5" />
                 <div>
-                  <p className="font-medium">
+                  <Link
+                    href={`/repo/${repo._id}`}
+                    className="font-medium hover:underline cursor-pointer"
+                  >
                     {repo.owner}/{repo.name}
-                  </p>
+                  </Link>
                   <div className="text-muted-foreground flex items-center gap-2 text-xs">
                     <Clock className="h-3 w-3" />
                     {new Date(repo.createdAt).toLocaleDateString()}
@@ -61,13 +76,38 @@ function RepoList() {
               </div>
               <div className="flex items-center gap-2">
                 <StatusBadge status={repo.status} />
-                <ExternalLink className="text-muted-foreground h-4 w-4" />
+                <Link
+                  href={`/repo/${repo._id}`}
+                  className="text-muted-foreground hover:text-foreground inline-flex"
+                  aria-label={`Open ${repo.owner}/${repo.name} progress`}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => {
+                    setDeleteTarget({ id: repo._id, name: `${repo.owner}/${repo.name}` })
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
-        </Link>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      {deleteTarget && (
+        <DeleteAnalysisDialog
+          open={!!deleteTarget}
+          onOpenChange={(open) => !open && setDeleteTarget(null)}
+          onConfirm={handleDelete}
+          repoName={deleteTarget.name}
+        />
+      )}
+    </>
   )
 }
 

@@ -110,6 +110,10 @@ export function RepoInput() {
             ))}
           </SelectContent>
         </Select>
+        <p className="text-xs text-muted-foreground">
+          Paid models are not currently available for analysis. To use a paid model, please add your
+          API key in the development settings.
+        </p>
       </div>
 
       <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>

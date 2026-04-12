@@ -248,6 +248,7 @@ export default function RepoPage() {
                   ))}
                 </SelectContent>
               </Select>
+
               {reAnalyzeModel === FREE_MODELS_ROUTER_ID && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Zap className="h-3 w-3" />

@@ -302,9 +302,10 @@ export const fetchRepo = action({
       const hasCriticalFile = CRITICAL_PATHS.some((path) => fetchedPaths.has(path))
       const attemptedFetches = filesToFetch.length || 1
       const failureRatio = failedFetchCount / attemptedFetches
+      const minRequiredFetched = Math.min(MIN_FETCHED_FILES, filesToFetch.length)
 
       if (
-        Object.keys(fetchedFiles).length < MIN_FETCHED_FILES ||
+        Object.keys(fetchedFiles).length < minRequiredFetched ||
         failureRatio > MAX_FETCH_FAILURE_RATIO ||
         !hasCriticalFile
       ) {
@@ -313,6 +314,7 @@ export const fetchRepo = action({
           `failed=${failedFetchCount}`,
           `empty=${emptyContentCount}`,
           `requested=${filesToFetch.length}`,
+          `minRequired=${minRequiredFetched}`,
           `failureRatio=${failureRatio.toFixed(2)}`,
           `hasCriticalFile=${hasCriticalFile}`,
         ]
