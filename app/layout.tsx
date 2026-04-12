@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'RepoGuide — GitHub Repo Analyzer',
   description: 'Analyze any GitHub repository and generate a comprehensive learning guide with AI.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({

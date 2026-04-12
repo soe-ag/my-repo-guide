@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="orb" x1="38" y1="36" x2="52" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#bg)"/>
+
+  <!-- Lucide-style notebook/document -->
+  <path d="M18 18h19a4 4 0 0 1 4 4v22a2 2 0 0 1-2 2H22a4 4 0 0 1-4-4V18Z" stroke="#E2E8F0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M23 26h12M23 32h9M23 38h7" stroke="#93C5FD" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Magnifier + spark point for "analysis" -->
+  <circle cx="44" cy="42" r="6" fill="url(#orb)" stroke="#FDE68A" stroke-width="2"/>
+  <path d="m48 46 5 5" stroke="#FDE68A" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Tiny star accent -->
+  <path d="M47 15v3M47 21v3M43 19h3M51 19h3" stroke="#F8FAFC" stroke-width="2" stroke-linecap="round"/>
+</svg>

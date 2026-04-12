@@ -248,6 +248,11 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <RepoInput />
+            <p className="mt-4 text-xs text-muted-foreground">
+              Analysis currently works for public repositories by default. To analyze private
+              repositories, add your GitHub token in your own development environment (Convex
+              environment variable: GITHUB_ACCESS_TOKEN).
+            </p>
           </CardContent>
         </Card>
 
