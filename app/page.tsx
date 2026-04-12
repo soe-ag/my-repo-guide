@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { GitBranch, Clock, ExternalLink, FileText, Trash2 } from 'lucide-react'
+import { GitBranch, Clock, ExternalLink, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -110,56 +110,60 @@ function SavedAnalysesList() {
 
   return (
     <>
-      <div className="space-y-3">
-        {savedAnalyses.map((sa, index) => (
-          <div key={sa._id} className="group relative">
-            <Link href={`/analysis/${sa.slug}`}>
-              <Card className="transition-colors hover:bg-accent/50 cursor-pointer">
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="text-muted-foreground w-7 text-xs font-medium">
-                      #{index + 1}
-                    </div>
-                    <FileText className="text-muted-foreground h-5 w-5 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">
-                        {sa.owner}/{sa.name}
-                      </p>
-                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                        <Clock className="h-3 w-3" />
-                        {new Date(sa.createdAt).toLocaleString()}
-                        <span className="text-muted-foreground/60">&middot;</span>
-                        <span>{getModelName(sa.model)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
+      <div className="overflow-x-auto rounded-lg border">
+        <table className="w-full min-w-180 text-sm">
+          <thead className="bg-muted/40">
+            <tr className="text-left">
+              <th className="px-4 py-3 font-medium text-muted-foreground w-14">#</th>
+              <th className="px-4 py-3 font-medium text-muted-foreground">Title</th>
+              <th className="px-4 py-3 font-medium text-muted-foreground">Model</th>
+              <th className="px-4 py-3 font-medium text-muted-foreground">Created</th>
+              <th className="px-4 py-3 font-medium text-muted-foreground text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {savedAnalyses.map((sa, index) => (
+              <tr key={sa._id} className="border-t hover:bg-accent/30 transition-colors">
+                <td className="px-4 py-1 text-muted-foreground">{index + 1}</td>
+                <td className="px-4 py-1">
+                  <Link
+                    href={`/analysis/${sa.slug}`}
+                    className="font-medium hover:underline cursor-pointer"
+                  >
+                    {sa.owner}/{sa.name}
+                  </Link>
+                </td>
+                <td className="px-4 py-1 text-muted-foreground">{getModelName(sa.model)}</td>
+                <td className="px-4 py-1 text-muted-foreground">
+                  {new Date(sa.createdAt).toLocaleString()}
+                </td>
+                <td className="px-4 py-1">
+                  <div className="flex items-center justify-end gap-1">
                     <a
                       href={sa.repoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-foreground"
-                      onClick={(e) => e.stopPropagation()}
+                      className="text-muted-foreground hover:text-foreground inline-flex"
+                      aria-label={`Open ${sa.owner}/${sa.name} repository`}
                     >
                       <ExternalLink className="h-4 w-4" />
                     </a>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:cursor-pointer"
+                      onClick={() => {
+                        setDeleteTarget({ id: sa._id, name: `${sa.owner}/${sa.name}` })
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-              onClick={(e) => {
-                e.preventDefault()
-                setDeleteTarget({ id: sa._id, name: `${sa.owner}/${sa.name}` })
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {deleteTarget && (
@@ -177,7 +181,7 @@ function SavedAnalysesList() {
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col items-center bg-background">
-      <main className="flex w-full max-w-2xl flex-col gap-8 px-4 py-16 sm:px-6 sm:py-24">
+      <main className="flex w-full max-w-4xl flex-col gap-8 px-4 py-16 sm:px-6 sm:py-24">
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">RepoGuide</h1>
           <p className="text-muted-foreground text-lg">
