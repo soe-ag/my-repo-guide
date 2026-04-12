@@ -4,11 +4,8 @@ import { type AnalysisType } from '@/lib/prompts'
 import { CheckCircle2, Circle, Loader2 } from 'lucide-react'
 
 const PIPELINE_STEPS: { types: AnalysisType[]; label: string }[] = [
-  { types: ['techStack', 'structure'], label: 'Tech Stack & Structure' },
-  { types: ['dataModel'], label: 'Data Model / Schema' },
-  { types: ['routes'], label: 'Routes & Pages' },
-  { types: ['architecture', 'patterns'], label: 'Architecture & Patterns' },
-  { types: ['learningPath'], label: 'Learning Path' },
+  { types: ['orientation'], label: 'Orientation — Stack & Structure' },
+  { types: ['deepDive'], label: 'Deep Dive — Data, Flows & Reading Order' },
 ]
 
 interface AnalysisProgressProps {

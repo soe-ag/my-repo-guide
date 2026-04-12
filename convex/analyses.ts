@@ -4,15 +4,7 @@ import { mutation, query } from './_generated/server'
 export const create = mutation({
   args: {
     repoId: v.id('repos'),
-    type: v.union(
-      v.literal('techStack'),
-      v.literal('structure'),
-      v.literal('architecture'),
-      v.literal('routes'),
-      v.literal('dataModel'),
-      v.literal('patterns'),
-      v.literal('learningPath')
-    ),
+    type: v.string(),
     content: v.string(),
     model: v.string(),
   },

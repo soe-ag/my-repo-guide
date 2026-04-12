@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm'
 
 interface Analysis {
   _id: string
-  type: AnalysisType
+  type: string
   content: string
   model: string
   createdAt: number
@@ -17,15 +17,7 @@ interface AnalysisTabsProps {
   analyses: Analysis[]
 }
 
-const TAB_ORDER: AnalysisType[] = [
-  'techStack',
-  'structure',
-  'architecture',
-  'routes',
-  'dataModel',
-  'patterns',
-  'learningPath',
-]
+const TAB_ORDER: AnalysisType[] = ['orientation', 'deepDive']
 
 export function AnalysisTabs({ analyses }: AnalysisTabsProps) {
   const analysisMap = new Map(analyses.map((a) => [a.type, a]))

@@ -95,24 +95,22 @@ async function callOpenRouter(
   const isFreeRouter = !model || model === FREE_MODELS_ROUTER_ID
   const effectiveModel = isFreeRouter ? FREE_MODELS_ROUTER_ID : model
 
-  // Build request body: for paid models, add free router as fallback
   const requestBody: Record<string, unknown> = {
     messages: [
       {
         role: 'system',
         content:
-          'You are an expert software architect analyzing a GitHub repository. Provide detailed, structured analysis in Markdown format. Be specific — reference actual file names, function names, and code patterns.',
+          'You are an expert software architect generating a concise repo brief. Use Markdown. Be terse — tables and bullets over prose. Reference actual file names.',
       },
       { role: 'user', content: prompt },
     ],
-    max_tokens: 4096,
+    max_tokens: 1500,
     temperature: 0.3,
   }
 
   if (isFreeRouter) {
     requestBody.model = FREE_MODELS_ROUTER_ID
   } else {
-    // Use selected model with free router as fallback
     requestBody.models = [effectiveModel, FREE_MODELS_ROUTER_ID]
     requestBody.route = 'fallback'
   }
@@ -125,27 +123,7 @@ async function callOpenRouter(
       'HTTP-Referer': 'https://repo-guide.vercel.app',
       'X-Title': 'RepoGuide',
     },
-<<<<<<< HEAD
-<<<<<<< HEAD
-    body: JSON.stringify({
-      model,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert software architect generating a concise repo brief. Use Markdown. Be terse — tables and bullets over prose. Reference actual file names.',
-        },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: 1500,
-      temperature: 0.3,
-    }),
-=======
     body: JSON.stringify(requestBody),
->>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
-=======
-    body: JSON.stringify(requestBody),
->>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
   })
 
   if (!res.ok) {
@@ -234,44 +212,20 @@ export const analyzeRepo = action({
         packageJson,
         truncateFiles(configFiles, 25000)
       )
-<<<<<<< HEAD
-<<<<<<< HEAD
-      const orientationResult = await callOpenRouter(orientationPrompt, args.model, apiKey)
+      const orientationResult = await callAndTrack(orientationPrompt)
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
         type: 'orientation',
         content: orientationResult,
-        model: args.model,
-=======
-=======
->>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
-      const techStackResult = await callAndTrack(techStackPrompt)
-
-      await ctx.runMutation(api.analyses.create, {
-        repoId: args.repoId,
-        type: 'techStack',
-        content: techStackResult,
         model: effectiveModel,
-      })
-      await ctx.runMutation(api.analyses.create, {
-        repoId: args.repoId,
-        type: 'structure',
-        content: techStackResult,
-        model: effectiveModel,
-<<<<<<< HEAD
->>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
-=======
->>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
       })
 
       // Step 2 — Deep Dive (Data Model + Key Flows + Reading Order)
       const { buildDeepDivePrompt } = await import('../lib/prompts')
       const schemaFiles = matchFiles(fetchedFiles, SCHEMA_PATTERNS)
-<<<<<<< HEAD
       const routeFiles = matchFiles(fetchedFiles, ROUTE_PATTERNS)
 
-      // Up to 8 key source files not already covered above
       const excludedPaths = new Set([
         ...Object.keys(configFiles),
         ...Object.keys(schemaFiles),
@@ -289,84 +243,13 @@ export const analyzeRepo = action({
         truncateFiles(sourceFiles, 10000),
         fileTreeStr
       )
-      const deepDiveResult = await callOpenRouter(deepDivePrompt, args.model, apiKey)
+      const deepDiveResult = await callAndTrack(deepDivePrompt)
 
       await ctx.runMutation(api.analyses.create, {
         repoId: args.repoId,
         type: 'deepDive',
         content: deepDiveResult,
-        model: args.model,
-=======
-
-      const { buildDataModelPrompt } = await import('../lib/prompts')
-      const dataModelPrompt = buildDataModelPrompt(truncateFiles(schemaFiles, 40000), fileTreeStr)
-      const dataModelResult = await callAndTrack(dataModelPrompt)
-
-      await ctx.runMutation(api.analyses.create, {
-        repoId: args.repoId,
-        type: 'dataModel',
-        content: dataModelResult,
         model: effectiveModel,
-      })
-
-      // Step 3: Routes
-      const routeFiles = matchFiles(fetchedFiles, ROUTE_PATTERNS)
-
-      const { buildRoutesPrompt } = await import('../lib/prompts')
-      const routesPrompt = buildRoutesPrompt(truncateFiles(routeFiles, 50000), fileTreeStr)
-      const routesResult = await callAndTrack(routesPrompt)
-
-      await ctx.runMutation(api.analyses.create, {
-        repoId: args.repoId,
-        type: 'routes',
-        content: routesResult,
-        model: effectiveModel,
-      })
-
-      // Step 4: Patterns + Architecture
-      const allSourceFiles = Object.fromEntries(
-        Object.entries(fetchedFiles).filter(
-          ([path]) =>
-            /\.(tsx?|jsx?|py|rb|go|rs)$/.test(path) && !CONFIG_PATTERNS.some((p) => p.test(path))
-        )
-      )
-
-      const { buildPatternsPrompt } = await import('../lib/prompts')
-      const patternsPrompt = buildPatternsPrompt(truncateFiles(allSourceFiles, 60000), fileTreeStr)
-      const patternsResult = await callAndTrack(patternsPrompt)
-
-      await ctx.runMutation(api.analyses.create, {
-        repoId: args.repoId,
-        type: 'architecture',
-        content: patternsResult,
-        model: effectiveModel,
-      })
-      await ctx.runMutation(api.analyses.create, {
-        repoId: args.repoId,
-        type: 'patterns',
-        content: patternsResult,
-        model: effectiveModel,
-      })
-
-      // Step 5: Learning Path (synthesis)
-      const { buildLearningPathPrompt } = await import('../lib/prompts')
-      const learningPathPrompt = buildLearningPathPrompt(
-        techStackResult,
-        dataModelResult,
-        routesResult,
-        patternsResult
-      )
-      const learningPathResult = await callAndTrack(learningPathPrompt)
-
-      await ctx.runMutation(api.analyses.create, {
-        repoId: args.repoId,
-        type: 'learningPath',
-        content: learningPathResult,
-        model: effectiveModel,
-<<<<<<< HEAD
->>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
-=======
->>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
       })
 
       // Combine and save

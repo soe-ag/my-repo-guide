@@ -105,12 +105,6 @@ Rules:
 
 export { FREE_MODELS_ROUTER_ID, FREE_DAILY_LIMIT } from './constants'
 
-// Re-import for local use in OPENROUTER_MODELS
-import { FREE_MODELS_ROUTER_ID as _FREE_ID } from './constants'
-
-export { FREE_MODELS_ROUTER_ID, FREE_DAILY_LIMIT } from './constants'
-
-// Re-import for local use in OPENROUTER_MODELS
 import { FREE_MODELS_ROUTER_ID as _FREE_ID } from './constants'
 
 export const OPENROUTER_MODELS = [
