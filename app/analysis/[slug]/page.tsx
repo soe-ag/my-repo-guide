@@ -3,7 +3,7 @@
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { useParams, useRouter } from 'next/navigation'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ArrowLeft, Download, ExternalLink, Copy, Check, Trash2, Menu, X } from 'lucide-react'
@@ -12,6 +12,7 @@ import Link from 'next/link'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { DeleteAnalysisDialog } from '@/components/delete-analysis-dialog'
+import Image from 'next/image'
 
 interface HeadingItem {
   id: string
@@ -110,7 +111,7 @@ export default function AnalysisPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
 
-  const headings = analysis ? extractHeadings(analysis.content) : []
+  const headings = useMemo(() => (analysis ? extractHeadings(analysis.content) : []), [analysis])
 
   // Track active heading on scroll
   useEffect(() => {
@@ -177,7 +178,7 @@ export default function AnalysisPage() {
     return (
       <div className="mx-auto w-full max-w-4xl space-y-4 px-4 py-16">
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-[600px] w-full" />
+        <Skeleton className="h-150 w-full" />
       </div>
     )
   }
@@ -208,7 +209,7 @@ export default function AnalysisPage() {
 
       <main className="flex-1 min-w-0">
         {/* Sticky header */}
-        <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
           <div className="flex items-center justify-between px-4 py-3 sm:px-6">
             <div className="flex items-center gap-3 min-w-0">
               <Button
@@ -260,8 +261,22 @@ export default function AnalysisPage() {
           </div>
         </div>
 
+        <div className="max-w-4xl px-4 pt-6 sm:px-8 lg:px-12">
+          <div className="relative overflow-hidden rounded-2xl border shadow-sm">
+            <Image
+              src="/images/repoguide2.png"
+              alt="Analysis hero illustration"
+              width={1366}
+              height={768}
+              priority
+              className="h-44 w-full object-cover sm:h-56"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/35 via-transparent to-transparent" />
+          </div>
+        </div>
+
         {/* Analysis content */}
-        <div ref={contentRef} className="px-4 py-8 sm:px-8 lg:px-12 max-w-4xl">
+        <div ref={contentRef} className="px-4 pt-6 pb-8 sm:px-8 lg:px-12 max-w-4xl">
           <div className="text-muted-foreground text-xs mb-6">
             Model: {analysis.model} &middot; {new Date(analysis.createdAt).toLocaleString()}
           </div>

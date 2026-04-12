@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { DeleteAnalysisDialog } from '@/components/delete-analysis-dialog'
 import type { Id } from '@/convex/_generated/dataModel'
 import { OPENROUTER_MODELS } from '@/lib/prompts'
+import Image from 'next/image'
 
 function StatusBadge({ status }: { status: string }) {
   const variant = status === 'done' ? 'default' : status === 'error' ? 'destructive' : 'secondary'
@@ -222,6 +223,18 @@ export default function Home() {
   return (
     <div className="flex flex-1 flex-col items-center bg-background">
       <main className="flex w-full max-w-4xl flex-col gap-8 px-4 py-16 sm:px-6 sm:py-24">
+        <div className="relative overflow-hidden rounded-2xl border shadow-sm">
+          <Image
+            src="/images/repoguide1.png"
+            alt="RepoGuide hero illustration"
+            width={1366}
+            height={768}
+            priority
+            className="h-56 w-full object-cover sm:h-72"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/35 via-transparent to-transparent" />
+        </div>
+
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">RepoGuide</h1>
           <p className="text-muted-foreground text-lg">
