@@ -75,3 +75,11 @@ export const list = query({
     return await ctx.db.query('repos').withIndex('by_createdAt').order('desc').collect()
   },
 })
+
+export const listInProgress = query({
+  args: {},
+  handler: async (ctx) => {
+    const repos = await ctx.db.query('repos').withIndex('by_createdAt').order('desc').collect()
+    return repos.filter((repo) => repo.status === 'fetching' || repo.status === 'analyzing')
+  },
+})

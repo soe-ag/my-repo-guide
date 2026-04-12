@@ -13,6 +13,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { DeleteAnalysisDialog } from '@/components/delete-analysis-dialog'
 import type { Id } from '@/convex/_generated/dataModel'
+import { OPENROUTER_MODELS } from '@/lib/prompts'
 
 function StatusBadge({ status }: { status: string }) {
   const variant = status === 'done' ? 'default' : status === 'error' ? 'destructive' : 'secondary'
@@ -20,7 +21,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function RepoList() {
-  const repos = useQuery(api.repos.list)
+  const repos = useQuery(api.repos.listInProgress)
 
   if (repos === undefined) {
     return (
@@ -35,7 +36,7 @@ function RepoList() {
   if (repos.length === 0) {
     return (
       <p className="text-muted-foreground py-8 text-center text-sm">
-        No repositories analyzed yet. Enter a GitHub URL above to get started.
+        No analyses currently in progress.
       </p>
     )
   }
@@ -68,6 +69,10 @@ function RepoList() {
       ))}
     </div>
   )
+}
+
+function getModelName(modelId: string): string {
+  return OPENROUTER_MODELS.find((model) => model.id === modelId)?.name ?? modelId
 }
 
 function SavedAnalysesList() {
@@ -106,12 +111,15 @@ function SavedAnalysesList() {
   return (
     <>
       <div className="space-y-3">
-        {savedAnalyses.map((sa) => (
+        {savedAnalyses.map((sa, index) => (
           <div key={sa._id} className="group relative">
             <Link href={`/analysis/${sa.slug}`}>
               <Card className="transition-colors hover:bg-accent/50 cursor-pointer">
                 <CardContent className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3">
+                    <div className="text-muted-foreground w-7 text-xs font-medium">
+                      #{index + 1}
+                    </div>
                     <FileText className="text-muted-foreground h-5 w-5 shrink-0" />
                     <div className="min-w-0">
                       <p className="font-medium truncate">
@@ -119,9 +127,9 @@ function SavedAnalysesList() {
                       </p>
                       <div className="text-muted-foreground flex items-center gap-2 text-xs">
                         <Clock className="h-3 w-3" />
-                        {new Date(sa.createdAt).toLocaleDateString()}
+                        {new Date(sa.createdAt).toLocaleString()}
                         <span className="text-muted-foreground/60">&middot;</span>
-                        <span>{sa.model}</span>
+                        <span>{getModelName(sa.model)}</span>
                       </div>
                     </div>
                   </div>

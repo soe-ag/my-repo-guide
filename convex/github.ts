@@ -33,6 +33,24 @@ const ROUTE_PATTERNS = [
 
 const SOURCE_PATTERNS = [/\.(tsx|jsx|ts|js)$/]
 
+const DOC_PATTERNS = [
+  /^README\.md$/i,
+  /^docs\/.*\.(md|mdx)$/i,
+  /^ARCHITECTURE\.md$/i,
+  /^CONTRIBUTING\.md$/i,
+  /^CHANGELOG\.md$/i,
+]
+
+const MAX_FILE_SIZE_BYTES = 120000
+const MAX_FILES_TO_FETCH = 120
+const MAX_PER_TOP_LEVEL_DIR = 18
+const MAX_PER_EXTENSION = 36
+const FETCH_BATCH_SIZE = 12
+const MAX_FETCH_FAILURE_RATIO = 0.4
+const MIN_FETCHED_FILES = 12
+
+const CRITICAL_PATHS = ['package.json', 'README.md', 'readme.md']
+
 const IGNORE_PATTERNS = [
   /node_modules/,
   /\.next\//,
@@ -68,6 +86,109 @@ function isRoute(path: string): boolean {
 
 function isSource(path: string): boolean {
   return SOURCE_PATTERNS.some((p) => p.test(path))
+}
+
+function isDoc(path: string): boolean {
+  return DOC_PATTERNS.some((p) => p.test(path))
+}
+
+function getTopLevelDir(path: string): string {
+  const slashIndex = path.indexOf('/')
+  return slashIndex === -1 ? '(root)' : path.slice(0, slashIndex)
+}
+
+function getExtension(path: string): string {
+  const match = path.toLowerCase().match(/\.([a-z0-9]+)$/)
+  return match ? match[1] : '(none)'
+}
+
+function scoreFile(path: string, size: number): number {
+  let score = 0
+
+  if (isPriority(path)) score += 1000
+  if (isRoute(path)) score += 700
+  if (isDoc(path)) score += 320
+  if (isSource(path)) score += 220
+
+  if (/^(src|app|pages|routes|convex|server|api|lib)\//.test(path)) {
+    score += 90
+  }
+
+  if (/(auth|schema|config|middleware|router|service|controller)/i.test(path)) {
+    score += 50
+  }
+
+  if (size <= 8000) score += 80
+  else if (size <= 30000) score += 45
+  else if (size <= 80000) score += 12
+  else if (size > MAX_FILE_SIZE_BYTES) score -= 300
+
+  return score
+}
+
+function pickFilesForFetch(allFiles: GitHubTreeItem[]): string[] {
+  const eligible = allFiles.filter((file) => {
+    const size = file.size || 0
+    if (size > MAX_FILE_SIZE_BYTES) return false
+    return isPriority(file.path) || isRoute(file.path) || isSource(file.path) || isDoc(file.path)
+  })
+
+  const scored = eligible
+    .map((file) => ({
+      ...file,
+      score: scoreFile(file.path, file.size || 0),
+    }))
+    .sort((a, b) => b.score - a.score)
+
+  const targetCount = Math.min(MAX_FILES_TO_FETCH, Math.max(40, scored.length))
+  const selected: string[] = []
+  const selectedSet = new Set<string>()
+  const perDirCount = new Map<string, number>()
+  const perExtCount = new Map<string, number>()
+
+  const trySelect = (path: string, enforceCaps: boolean) => {
+    if (selectedSet.has(path)) return
+
+    if (enforceCaps) {
+      const dir = getTopLevelDir(path)
+      const ext = getExtension(path)
+      const dirCount = perDirCount.get(dir) || 0
+      const extCount = perExtCount.get(ext) || 0
+      if (dirCount >= MAX_PER_TOP_LEVEL_DIR) return
+      if (extCount >= MAX_PER_EXTENSION) return
+    }
+
+    selected.push(path)
+    selectedSet.add(path)
+    const dir = getTopLevelDir(path)
+    const ext = getExtension(path)
+    perDirCount.set(dir, (perDirCount.get(dir) || 0) + 1)
+    perExtCount.set(ext, (perExtCount.get(ext) || 0) + 1)
+  }
+
+  // First pass: always keep key config and architectural files.
+  for (const file of scored) {
+    if (selected.length >= targetCount) break
+    if (isPriority(file.path) || isRoute(file.path)) {
+      trySelect(file.path, false)
+    }
+  }
+
+  // Second pass: diversify coverage across folders and languages.
+  for (const file of scored) {
+    if (selected.length >= targetCount) break
+    trySelect(file.path, true)
+  }
+
+  // Final backfill if caps prevented reaching target.
+  if (selected.length < targetCount) {
+    for (const file of scored) {
+      if (selected.length >= targetCount) break
+      trySelect(file.path, false)
+    }
+  }
+
+  return selected
 }
 
 interface GitHubTreeItem {
@@ -137,26 +258,15 @@ export const fetchRepo = action({
 
       const fileTree = allFiles.map((f) => f.path)
 
-      // 3. Prioritize files to fetch (cap at ~50)
-      const priorityFiles = allFiles.filter((f) => isPriority(f.path))
-      const routeFiles = allFiles.filter((f) => isRoute(f.path) && !isPriority(f.path))
-      const sourceFiles = allFiles
-        .filter(
-          (f) =>
-            isSource(f.path) && !isPriority(f.path) && !isRoute(f.path) && (f.size || 0) < 50000
-        )
-        .sort((a, b) => (b.size || 0) - (a.size || 0))
+      // 3. Select files with balanced coverage across repo areas.
+      const filesToFetch = pickFilesForFetch(allFiles)
 
-      const filesToFetch: string[] = [
-        ...priorityFiles.map((f) => f.path),
-        ...routeFiles.map((f) => f.path),
-        ...sourceFiles.map((f) => f.path),
-      ].slice(0, 50)
-
-      // 4. Fetch file contents in parallel (batches of 10)
+      // 4. Fetch file contents in parallel (small batches avoid rate spikes)
       const fetchedFiles: Record<string, string> = {}
-      for (let i = 0; i < filesToFetch.length; i += 10) {
-        const batch = filesToFetch.slice(i, i + 10)
+      let failedFetchCount = 0
+      let emptyContentCount = 0
+      for (let i = 0; i < filesToFetch.length; i += FETCH_BATCH_SIZE) {
+        const batch = filesToFetch.slice(i, i + FETCH_BATCH_SIZE)
         const results = await Promise.all(
           batch.map(async (path) => {
             try {
@@ -167,15 +277,49 @@ export const fetchRepo = action({
                 defaultBranch,
                 token
               )
-              return { path, content }
+              return { path, content, ok: true }
             } catch {
-              return { path, content: '// Failed to fetch' }
+              return { path, content: '', ok: false }
             }
           })
         )
-        for (const { path, content } of results) {
+        for (const { path, content, ok } of results) {
+          if (!ok) {
+            failedFetchCount += 1
+            continue
+          }
+
+          if (!content.trim()) {
+            emptyContentCount += 1
+            continue
+          }
+
           fetchedFiles[path] = content
         }
+      }
+
+      const fetchedPaths = new Set(Object.keys(fetchedFiles))
+      const hasCriticalFile = CRITICAL_PATHS.some((path) => fetchedPaths.has(path))
+      const attemptedFetches = filesToFetch.length || 1
+      const failureRatio = failedFetchCount / attemptedFetches
+
+      if (
+        Object.keys(fetchedFiles).length < MIN_FETCHED_FILES ||
+        failureRatio > MAX_FETCH_FAILURE_RATIO ||
+        !hasCriticalFile
+      ) {
+        const reasonParts = [
+          `fetched=${Object.keys(fetchedFiles).length}`,
+          `failed=${failedFetchCount}`,
+          `empty=${emptyContentCount}`,
+          `requested=${filesToFetch.length}`,
+          `failureRatio=${failureRatio.toFixed(2)}`,
+          `hasCriticalFile=${hasCriticalFile}`,
+        ]
+        throw new Error(
+          `Insufficient repository data fetched from GitHub (${reasonParts.join(', ')}). ` +
+            'This is often caused by API rate limits, missing GitHub token, or private-repo access issues.'
+        )
       }
 
       // 5. Store in Convex
@@ -192,7 +336,18 @@ export const fetchRepo = action({
         status: 'analyzing',
       })
 
-      return { success: true, fileCount: filesToFetch.length }
+      return {
+        success: true,
+        fileCount: filesToFetch.length,
+        fetchedCount: Object.keys(fetchedFiles).length,
+        failedFetchCount,
+        emptyContentCount,
+        totalRepoFiles: allFiles.length,
+        coverageRatio:
+          allFiles.length > 0
+            ? Math.round((filesToFetch.length / allFiles.length) * 1000) / 1000
+            : 0,
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       await ctx.runMutation(api.repos.updateStatus, {

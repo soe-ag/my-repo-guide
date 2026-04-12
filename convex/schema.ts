@@ -22,15 +22,7 @@ export default defineSchema({
 
   analyses: defineTable({
     repoId: v.id('repos'),
-    type: v.union(
-      v.literal('techStack'),
-      v.literal('structure'),
-      v.literal('architecture'),
-      v.literal('routes'),
-      v.literal('dataModel'),
-      v.literal('patterns'),
-      v.literal('learningPath')
-    ),
+    type: v.string(),
     content: v.string(),
     model: v.string(),
     createdAt: v.number(),
@@ -47,4 +39,11 @@ export default defineSchema({
   })
     .index('by_slug', ['slug'])
     .index('by_createdAt', ['createdAt']),
+
+  // Tracks daily OpenRouter free-router API call counts.
+  // 'date' is YYYY-MM-DD in UTC; 'count' is the number of API calls made that day.
+  freeUsage: defineTable({
+    date: v.string(),
+    count: v.number(),
+  }).index('by_date', ['date']),
 })

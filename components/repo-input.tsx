@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -15,8 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { OPENROUTER_MODELS } from '@/lib/prompts'
-import { Loader2, Search } from 'lucide-react'
+import { OPENROUTER_MODELS, FREE_MODELS_ROUTER_ID, FREE_DAILY_LIMIT } from '@/lib/prompts'
+import { Loader2, Search, Zap } from 'lucide-react'
 
 function parseGitHubUrl(url: string): { owner: string; name: string } | null {
   const cleaned = url
@@ -41,10 +41,11 @@ function parseGitHubUrl(url: string): { owner: string; name: string } | null {
 
 export function RepoInput() {
   const [url, setUrl] = useState('')
-  const [model, setModel] = useState<string>(OPENROUTER_MODELS[0].id)
+  const [model, setModel] = useState<string>(FREE_MODELS_ROUTER_ID)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const createRepo = useMutation(api.repos.create)
   const router = useRouter()
+  const todayFreeCount = useQuery(api.freeUsage.getTodayCount)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -88,7 +89,15 @@ export function RepoInput() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="model">AI Model</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="model">AI Model</Label>
+          {model === FREE_MODELS_ROUTER_ID && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Zap className="h-3 w-3" />
+              {todayFreeCount ?? '…'}/{FREE_DAILY_LIMIT} free requests today
+            </span>
+          )}
+        </div>
         <Select value={model} onValueChange={setModel} disabled={isSubmitting}>
           <SelectTrigger id="model" className="w-full">
             <SelectValue placeholder="Select a model" />
