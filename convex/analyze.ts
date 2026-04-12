@@ -126,6 +126,7 @@ async function callOpenRouter(
       'X-Title': 'RepoGuide',
     },
 <<<<<<< HEAD
+<<<<<<< HEAD
     body: JSON.stringify({
       model,
       messages: [
@@ -139,6 +140,9 @@ async function callOpenRouter(
       max_tokens: 1500,
       temperature: 0.3,
     }),
+=======
+    body: JSON.stringify(requestBody),
+>>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
 =======
     body: JSON.stringify(requestBody),
 >>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
@@ -231,6 +235,7 @@ export const analyzeRepo = action({
         truncateFiles(configFiles, 25000)
       )
 <<<<<<< HEAD
+<<<<<<< HEAD
       const orientationResult = await callOpenRouter(orientationPrompt, args.model, apiKey)
 
       await ctx.runMutation(api.analyses.create, {
@@ -239,6 +244,8 @@ export const analyzeRepo = action({
         content: orientationResult,
         model: args.model,
 =======
+=======
+>>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
       const techStackResult = await callAndTrack(techStackPrompt)
 
       await ctx.runMutation(api.analyses.create, {
@@ -252,6 +259,9 @@ export const analyzeRepo = action({
         type: 'structure',
         content: techStackResult,
         model: effectiveModel,
+<<<<<<< HEAD
+>>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
+=======
 >>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
       })
 
@@ -353,6 +363,9 @@ export const analyzeRepo = action({
         type: 'learningPath',
         content: learningPathResult,
         model: effectiveModel,
+<<<<<<< HEAD
+>>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
+=======
 >>>>>>> 769a730abe7c7e940ef43f35cb15e650e9dce094
       })
 

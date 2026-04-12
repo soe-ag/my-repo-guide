@@ -108,6 +108,11 @@ export { FREE_MODELS_ROUTER_ID, FREE_DAILY_LIMIT } from './constants'
 // Re-import for local use in OPENROUTER_MODELS
 import { FREE_MODELS_ROUTER_ID as _FREE_ID } from './constants'
 
+export { FREE_MODELS_ROUTER_ID, FREE_DAILY_LIMIT } from './constants'
+
+// Re-import for local use in OPENROUTER_MODELS
+import { FREE_MODELS_ROUTER_ID as _FREE_ID } from './constants'
+
 export const OPENROUTER_MODELS = [
   { id: _FREE_ID, name: 'Free Models (Auto)' },
   { id: 'qwen/qwen3.6-plus-preview:free', name: 'Qwen 3.6 Plus Preview (Free)' },
