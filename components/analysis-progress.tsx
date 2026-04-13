@@ -27,54 +27,75 @@ export function AnalysisProgress({ completedTypes, status, errorMessage }: Analy
     return 'pending'
   }
 
-  return (
-    <div className="space-y-3">
-      {/* Fetching step */}
-      <div className="flex items-center gap-3">
-        {status === 'fetching' ? (
-          <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-        ) : status === 'error' && completedTypes.length === 0 ? (
-          <Circle className="text-destructive h-5 w-5" />
-        ) : (
-          <CheckCircle2 className="h-5 w-5 text-green-500" />
-        )}
-        <span
-          className={status === 'fetching' ? 'font-medium text-blue-500' : 'text-muted-foreground'}
-        >
-          Fetching repository contents
-        </span>
-      </div>
+  const steps = [
+    {
+      label: 'Fetching repository contents',
+      state:
+        status === 'fetching'
+          ? 'in-progress'
+          : status === 'error' && completedTypes.length === 0
+            ? 'error'
+            : 'done',
+    },
+    ...PIPELINE_STEPS.map((step) => ({
+      label: step.label,
+      state: getStepStatus(step),
+    })),
+  ]
 
-      {/* Analysis steps */}
-      {PIPELINE_STEPS.map((step, i) => {
-        const stepStatus = getStepStatus(step)
-        return (
-          <div key={i} className="flex items-center gap-3">
-            {stepStatus === 'done' ? (
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-            ) : stepStatus === 'in-progress' ? (
-              <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-            ) : (
-              <Circle className="text-muted-foreground h-5 w-5" />
-            )}
-            <span
-              className={
-                stepStatus === 'in-progress'
-                  ? 'font-medium text-blue-500'
-                  : stepStatus === 'done'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
-              }
-            >
-              {step.label}
+  return (
+    <div className="space-y-5">
+      <ol className="border-y border-black">
+        {steps.map((step, index) => (
+          <li
+            key={step.label}
+            className="grid gap-3 border-t border-black px-0 py-4 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
+          >
+            <span className="font-display text-3xl leading-none tracking-[-0.04em] text-foreground sm:text-4xl">
+              {String(index + 1).padStart(2, '0')}
             </span>
-          </div>
-        )
-      })}
+
+            <div className="space-y-1">
+              <p className="editorial-kicker text-muted-foreground">Pipeline step</p>
+              <p
+                className={
+                  step.state === 'in-progress'
+                    ? 'font-ui text-base font-semibold text-[#057dbc]'
+                    : step.state === 'done'
+                      ? 'font-ui text-base font-semibold text-foreground'
+                      : 'font-ui text-base text-muted-foreground'
+                }
+              >
+                {step.label}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 justify-self-start sm:justify-self-end">
+              {step.state === 'done' ? (
+                <CheckCircle2 className="h-5 w-5 text-foreground" />
+              ) : step.state === 'in-progress' ? (
+                <Loader2 className="h-5 w-5 animate-spin text-[#057dbc]" />
+              ) : (
+                <Circle className="h-5 w-5 text-muted-foreground" />
+              )}
+              <span className="font-mono text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
+                {step.state === 'in-progress'
+                  ? 'Running'
+                  : step.state === 'done'
+                    ? 'Filed'
+                    : step.state === 'error'
+                      ? 'Stopped'
+                      : 'Queued'}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ol>
 
       {status === 'error' && errorMessage && (
-        <div className="bg-destructive/10 text-destructive mt-2 rounded-md p-3 text-sm">
-          {errorMessage}
+        <div className="border-l-2 border-black pl-4">
+          <p className="editorial-kicker text-muted-foreground">Pipeline note</p>
+          <p className="mt-2 font-body text-base leading-7 text-foreground">{errorMessage}</p>
         </div>
       )}
     </div>

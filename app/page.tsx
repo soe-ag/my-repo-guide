@@ -3,7 +3,6 @@
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { RepoInput } from '@/components/repo-input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -16,8 +15,15 @@ import type { Id } from '@/convex/_generated/dataModel'
 import { OPENROUTER_MODELS } from '@/lib/prompts'
 import Image from 'next/image'
 
+function formatDate(value: number, withTime = false) {
+  return new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+    ...(withTime ? { timeStyle: 'short' as const } : {}),
+  }).format(new Date(value))
+}
+
 function StatusBadge({ status }: { status: string }) {
-  const variant = status === 'done' ? 'default' : status === 'error' ? 'destructive' : 'secondary'
+  const variant = status === 'done' ? 'default' : status === 'error' ? 'outline' : 'secondary'
   return <Badge variant={variant}>{status}</Badge>
 }
 
@@ -38,9 +44,9 @@ function RepoList() {
 
   if (repos === undefined) {
     return (
-      <div className="space-y-3">
+      <div className="border-y border-black">
         {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-lg" />
+          <Skeleton key={i} className="h-28 w-full border-t border-black first:border-t-0" />
         ))}
       </div>
     )
@@ -56,47 +62,60 @@ function RepoList() {
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="border-y border-black">
         {repos.map((repo) => (
-          <Card key={repo._id} className="transition-colors hover:bg-accent/50">
-            <CardContent className="flex items-center justify-between px-4">
-              <div className="flex items-center gap-3">
-                <GitBranch className="text-muted-foreground h-5 w-5" />
-                <div>
-                  <Link
-                    href={`/repo/${repo._id}`}
-                    className="font-medium hover:underline cursor-pointer"
-                  >
-                    {repo.owner}/{repo.name}
-                  </Link>
-                  <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                    <Clock className="h-3 w-3" />
-                    {new Date(repo.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
+          <article
+            key={repo._id}
+            className="grid gap-4 border-t border-black px-0 py-4 first:border-t-0 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center"
+          >
+            <div className="flex items-start gap-4">
+              <div className="hidden pt-1 sm:block">
+                <GitBranch className="h-5 w-5 text-muted-foreground" />
               </div>
-              <div className="flex items-center gap-2">
-                <StatusBadge status={repo.status} />
+              <div className="space-y-2">
+                <p className="editorial-kicker text-muted-foreground">Live pipeline</p>
                 <Link
                   href={`/repo/${repo._id}`}
-                  className="text-muted-foreground hover:text-foreground inline-flex"
-                  aria-label={`Open ${repo.owner}/${repo.name} progress`}
+                  className="font-display text-[1.9rem] leading-[1.05] tracking-[-0.04em] text-foreground transition-colors hover:text-link"
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  {repo.owner}/{repo.name}
                 </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => {
-                    setDeleteTarget({ id: repo._id, name: `${repo.owner}/${repo.name}` })
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-ui text-sm text-muted-foreground">
+                  <span className="inline-flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5" />
+                    Started {formatDate(repo.createdAt)}
+                  </span>
+                  <StatusBadge status={repo.status} />
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            <div className="flex items-center gap-2 lg:justify-self-end">
+              <Link
+                href={`/repo/${repo._id}`}
+                className="font-ui text-sm font-semibold uppercase tracking-[0.14em] text-foreground underline decoration-black underline-offset-4 transition-colors hover:text-link"
+              >
+                Open progress
+              </Link>
+              <Link
+                href={`/repo/${repo._id}`}
+                className="text-muted-foreground transition-colors hover:text-link"
+                aria-label={`Open ${repo.owner}/${repo.name} progress`}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-foreground"
+                onClick={() => {
+                  setDeleteTarget({ id: repo._id, name: `${repo.owner}/${repo.name}` })
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </article>
         ))}
       </div>
 
@@ -133,9 +152,9 @@ function SavedAnalysesList() {
 
   if (savedAnalyses === undefined) {
     return (
-      <div className="space-y-3">
+      <div className="border-y border-black">
         {[1, 2].map((i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-lg" />
+          <Skeleton key={i} className="h-32 w-full border-t border-black first:border-t-0" />
         ))}
       </div>
     )
@@ -151,61 +170,54 @@ function SavedAnalysesList() {
 
   return (
     <>
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full min-w-180 text-sm">
-          <thead className="bg-muted/40">
-            <tr className="text-left">
-              <th className="px-4 py-3 font-medium text-muted-foreground w-14">#</th>
-              <th className="px-4 py-3 font-medium text-muted-foreground">Title</th>
-              <th className="px-4 py-3 font-medium text-muted-foreground">Model</th>
-              <th className="px-4 py-3 font-medium text-muted-foreground">Created</th>
-              <th className="px-4 py-3 font-medium text-muted-foreground text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {savedAnalyses.map((sa, index) => (
-              <tr key={sa._id} className="border-t hover:bg-accent/30 transition-colors">
-                <td className="px-4 py-1 text-muted-foreground">{index + 1}</td>
-                <td className="px-4 py-1">
-                  <Link
-                    href={`/analysis/${sa.slug}`}
-                    className="font-medium hover:underline cursor-pointer"
-                  >
-                    {sa.owner}/{sa.name}
-                  </Link>
-                </td>
-                <td className="px-4 py-1 text-muted-foreground">{getModelName(sa.model)}</td>
-                <td className="px-4 py-1 text-muted-foreground">
-                  {new Date(sa.createdAt).toLocaleString()}
-                </td>
-                <td className="px-4 py-1">
-                  <div className="flex items-center justify-end gap-1">
-                    <a
-                      href={sa.repoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-foreground inline-flex"
-                      aria-label={`Open ${sa.owner}/${sa.name} repository`}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive hover:cursor-pointer"
-                      onClick={() => {
-                        setDeleteTarget({ id: sa._id, name: `${sa.owner}/${sa.name}` })
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ol className="border-y border-black">
+        {savedAnalyses.map((sa, index) => (
+          <li
+            key={sa._id}
+            className="grid gap-4 border-t border-black py-4 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start"
+          >
+            <span className="font-display text-4xl leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+
+            <div className="space-y-2">
+              <p className="editorial-kicker text-muted-foreground">Saved analysis</p>
+              <Link
+                href={`/analysis/${sa.slug}`}
+                className="font-display text-[1.8rem] leading-[1.05] tracking-[-0.04em] text-foreground transition-colors hover:text-link"
+              >
+                {sa.owner}/{sa.name}
+              </Link>
+              <div className="grid gap-2 font-ui text-sm text-muted-foreground sm:grid-cols-2">
+                <span>Model: {getModelName(sa.model)}</span>
+                <span>Filed {formatDate(sa.createdAt, true)}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:justify-self-end">
+              <a
+                href={sa.repoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-ui text-sm font-semibold uppercase tracking-[0.14em] text-foreground underline decoration-black underline-offset-4 transition-colors hover:text-link"
+                aria-label={`Open ${sa.owner}/${sa.name} repository`}
+              >
+                Repo
+              </a>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-foreground"
+                onClick={() => {
+                  setDeleteTarget({ id: sa._id, name: `${sa.owner}/${sa.name}` })
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ol>
 
       {deleteTarget && (
         <DeleteAnalysisDialog
@@ -221,50 +233,110 @@ function SavedAnalysesList() {
 
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col items-center bg-background">
-      <main className="flex w-full max-w-4xl flex-col gap-8 px-4 py-16 sm:px-6 sm:py-24">
-        <div className="relative overflow-hidden rounded-2xl border shadow-sm">
-          <Image
-            src="/images/repoguide1.png"
-            alt="RepoGuide hero illustration"
-            width={1366}
-            height={768}
-            priority
-            className="h-56 w-full object-cover sm:h-72"
-          />
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/35 via-transparent to-transparent" />
-        </div>
+    <div className="flex flex-1 flex-col bg-background">
+      <main className="mx-auto flex w-full max-w-[1600px] flex-col px-4 pb-20 sm:px-6 lg:px-8">
+        <section className="grid gap-10 border-b border-black py-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(380px,0.9fr)] lg:items-end lg:py-14">
+          <div className="space-y-6">
+            <p className="editorial-kicker text-muted-foreground">Repository analysis desk</p>
+            <div className="space-y-4">
+              <h1 className="font-display text-[3.15rem] leading-[1.02] tracking-[-0.05em] text-foreground sm:text-[4.6rem] lg:max-w-[12ch]">
+                Learn a codebase like it has an editor.
+              </h1>
+              <p className="max-w-2xl font-body text-[1.12rem] leading-8 text-foreground sm:text-[1.2rem]">
+                RepoGuide turns any public GitHub repository into a readable briefing: structure,
+                system boundaries, deeper implementation notes, and exportable markdown you can
+                keep.
+              </p>
+            </div>
 
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">RepoGuide</h1>
-          <p className="text-muted-foreground text-lg">
-            Analyze any GitHub repo and generate a comprehensive learning guide with AI.
-          </p>
-        </div>
+            <div className="grid gap-4 border-t border-black pt-5 sm:grid-cols-3">
+              <div className="space-y-2 border-t border-black pt-3 sm:border-t-0 sm:pt-0">
+                <p className="editorial-kicker text-muted-foreground">Output</p>
+                <p className="font-ui text-base font-semibold text-foreground">
+                  Orientation + deep dive
+                </p>
+              </div>
+              <div className="space-y-2 border-t border-black pt-3 sm:border-t-0 sm:pt-0">
+                <p className="editorial-kicker text-muted-foreground">Format</p>
+                <p className="font-ui text-base font-semibold text-foreground">
+                  Live progress, saved reports, markdown export
+                </p>
+              </div>
+              <div className="space-y-2 border-t border-black pt-3 sm:border-t-0 sm:pt-0">
+                <p className="editorial-kicker text-muted-foreground">Scope</p>
+                <p className="font-ui text-base font-semibold text-foreground">
+                  Public repositories by default
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Analyze a Repository</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RepoInput />
-            <p className="mt-4 text-xs text-muted-foreground">
-              Analysis currently works for public repositories by default. To analyze private
-              repositories, add your GitHub token in your own development environment (Convex
-              environment variable: GITHUB_ACCESS_TOKEN).
+          <figure className="space-y-3">
+            <div className="overflow-hidden border border-black">
+              <Image
+                src="/images/repoguide1.png"
+                alt="RepoGuide hero illustration"
+                width={1366}
+                height={768}
+                priority
+                className="h-[300px] w-full object-cover sm:h-[360px]"
+              />
+            </div>
+            <figcaption className="font-body text-sm leading-6 text-muted-foreground">
+              Repository research rendered as a print-like front page: large headlines, hard rules,
+              and zero dashboard chrome.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section className="grid gap-8 border-b border-black py-10 lg:grid-cols-[minmax(300px,0.72fr)_minmax(0,1.28fr)] lg:gap-12 lg:py-12">
+          <div className="space-y-4">
+            <span className="editorial-ribbon">Start Analysis</span>
+            <h2 className="font-display text-[2.5rem] leading-[1.04] tracking-[-0.04em] text-foreground sm:text-[3.2rem]">
+              Feed the desk a repository.
+            </h2>
+            <p className="font-body text-[1.05rem] leading-8 text-muted-foreground">
+              Paste a GitHub URL, choose a model route, and let the pipeline fetch code, produce the
+              orientation pass, then expand into a deeper editorial read.
             </p>
-          </CardContent>
-        </Card>
+            <p className="border-t border-black pt-4 font-ui text-sm leading-6 text-muted-foreground">
+              Private repository support requires your own GitHub token in the Convex environment as
+              <span className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-foreground">
+                {' '}
+                GITHUB_ACCESS_TOKEN
+              </span>
+              .
+            </p>
+          </div>
 
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">Saved Analyses</h2>
-          <SavedAnalysesList />
-        </div>
+          <div className="border-t-2 border-black pt-6 lg:border-t-0 lg:border-l-2 lg:pl-8 lg:pt-0">
+            <RepoInput />
+          </div>
+        </section>
 
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">In Progress</h2>
-          <RepoList />
-        </div>
+        <section className="grid gap-10 py-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] lg:py-12">
+          <div className="space-y-5">
+            <div className="space-y-4">
+              <span className="editorial-ribbon">Saved Analyses</span>
+              <p className="max-w-2xl font-body text-[1.03rem] leading-8 text-muted-foreground">
+                Completed briefings stay here as numbered features. Open a report to browse the full
+                markdown document, jump by heading, copy it, or export it.
+              </p>
+            </div>
+            <SavedAnalysesList />
+          </div>
+
+          <div className="space-y-5">
+            <div className="space-y-4">
+              <span className="editorial-ribbon">In Progress</span>
+              <p className="font-body text-[1.03rem] leading-8 text-muted-foreground">
+                Active jobs stay visible while the pipeline fetches code and writes the two analysis
+                passes.
+              </p>
+            </div>
+            <RepoList />
+          </div>
+        </section>
       </main>
     </div>
   )

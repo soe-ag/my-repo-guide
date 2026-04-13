@@ -29,9 +29,9 @@ export function AnalysisTabs({ analyses }: AnalysisTabsProps) {
 
   return (
     <Tabs defaultValue={availableTabs[0]} className="w-full">
-      <TabsList className="flex h-auto flex-wrap gap-1">
+      <TabsList variant="line" className="flex h-auto w-full">
         {availableTabs.map((type) => (
-          <TabsTrigger key={type} value={type} className="text-xs sm:text-sm">
+          <TabsTrigger key={type} value={type} className="flex-1 sm:flex-none">
             {ANALYSIS_LABELS[type]}
           </TabsTrigger>
         ))}
@@ -40,11 +40,11 @@ export function AnalysisTabs({ analyses }: AnalysisTabsProps) {
       {availableTabs.map((type) => {
         const analysis = analysisMap.get(type)!
         return (
-          <TabsContent key={type} value={type} className="mt-4">
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+          <TabsContent key={type} value={type} className="mt-6 space-y-4">
+            <div className="editorial-prose max-w-none">
               <Markdown remarkPlugins={[remarkGfm]}>{analysis.content}</Markdown>
             </div>
-            <div className="text-muted-foreground mt-4 text-xs">
+            <div className="border-t border-black pt-4 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
               Generated with {analysis.model} • {new Date(analysis.createdAt).toLocaleString()}
             </div>
           </TabsContent>
