@@ -83,10 +83,10 @@ export function RepoInput() {
         </div>
 
         <div className="border-t border-black pt-4 lg:border-t-0 lg:border-l lg:pl-6 lg:pt-0">
-          <p className="editorial-kicker text-muted-foreground">Model routing</p>
+          <p className="editorial-kicker text-muted-foreground">Model</p>
           <p className="mt-2 font-ui text-sm leading-6 text-muted-foreground">
-            Free routing is available immediately. Paid models require your own API credentials in
-            development settings.
+            Free model analysis is available immediately. Paid models require your own API
+            credentials in development settings.
           </p>
         </div>
       </div>

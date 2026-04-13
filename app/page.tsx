@@ -154,7 +154,7 @@ function SavedAnalysesList() {
     return (
       <div className="border-y border-black">
         {[1, 2].map((i) => (
-          <Skeleton key={i} className="h-32 w-full border-t border-black first:border-t-0" />
+          <Skeleton key={i} className="h-24 w-full border-t border-black first:border-t-0" />
         ))}
       </div>
     )
@@ -174,45 +174,45 @@ function SavedAnalysesList() {
         {savedAnalyses.map((sa, index) => (
           <li
             key={sa._id}
-            className="grid gap-4 border-t border-black py-4 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start"
+            className="grid gap-3 border-t border-black py-3 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
           >
-            <span className="font-display text-4xl leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
+            <span className="font-display text-3xl leading-none tracking-[-0.04em] text-foreground sm:text-4xl">
               {String(index + 1).padStart(2, '0')}
             </span>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <p className="editorial-kicker text-muted-foreground">Saved analysis</p>
               <Link
                 href={`/analysis/${sa.slug}`}
-                className="font-display text-[1.8rem] leading-[1.05] tracking-[-0.04em] text-foreground transition-colors hover:text-link"
+                className="font-display text-[1.45rem] leading-[1.02] tracking-[-0.04em] text-foreground transition-colors hover:text-link sm:text-[1.6rem]"
               >
                 {sa.owner}/{sa.name}
               </Link>
-              <div className="grid gap-2 font-ui text-sm text-muted-foreground sm:grid-cols-2">
+              <div className="grid gap-x-4 gap-y-1 font-ui text-xs text-muted-foreground sm:grid-cols-2">
                 <span>Model: {getModelName(sa.model)}</span>
                 <span>Filed {formatDate(sa.createdAt, true)}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:justify-self-end">
+            <div className="flex items-center gap-1 sm:justify-self-end">
               <a
                 href={sa.repoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-ui text-sm font-semibold uppercase tracking-[0.14em] text-foreground underline decoration-black underline-offset-4 transition-colors hover:text-link"
+                className="font-ui text-xs font-semibold uppercase tracking-[0.14em] text-foreground underline decoration-black underline-offset-4 transition-colors hover:text-link"
                 aria-label={`Open ${sa.owner}/${sa.name} repository`}
               >
                 Repo
               </a>
               <Button
                 variant="ghost"
-                size="icon"
+                size="icon-xs"
                 className="text-foreground"
                 onClick={() => {
                   setDeleteTarget({ id: sa._id, name: `${sa.owner}/${sa.name}` })
                 }}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </div>
           </li>
@@ -234,13 +234,13 @@ function SavedAnalysesList() {
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <main className="mx-auto flex w-full max-w-[1600px] flex-col px-4 pb-20 sm:px-6 lg:px-8">
-        <section className="grid gap-10 border-b border-black py-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(380px,0.9fr)] lg:items-end lg:py-14">
+      <main className="mx-auto flex w-full max-w-400 flex-col px-4 pb-20 sm:px-6 lg:px-8">
+        <section className="grid gap-10 border-b border-black py-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(380px,0.9fr)] lg:items-center lg:py-14">
           <div className="space-y-6">
-            <p className="editorial-kicker text-muted-foreground">Repository analysis desk</p>
+            {/* <p className="editorial-kicker text-muted-foreground">Repository analysis desk</p> */}
             <div className="space-y-4">
-              <h1 className="font-display text-[3.15rem] leading-[1.02] tracking-[-0.05em] text-foreground sm:text-[4.6rem] lg:max-w-[12ch]">
-                Learn a codebase like it has an editor.
+              <h1 className="font-display text-[3.15rem] leading-[1.02] tracking-[-0.05em] text-foreground sm:text-[4.6rem] lg:max-w-[13ch]">
+                Every codebase, a readable briefing.
               </h1>
               <p className="max-w-2xl font-body text-[1.12rem] leading-8 text-foreground sm:text-[1.2rem]">
                 RepoGuide turns any public GitHub repository into a readable briefing: structure,
@@ -279,13 +279,13 @@ export default function Home() {
                 width={1366}
                 height={768}
                 priority
-                className="h-[300px] w-full object-cover sm:h-[360px]"
+                className="h-75 w-full object-cover sm:h-90"
               />
             </div>
-            <figcaption className="font-body text-sm leading-6 text-muted-foreground">
+            {/* <figcaption className="font-body text-sm leading-6 text-muted-foreground">
               Repository research rendered as a print-like front page: large headlines, hard rules,
               and zero dashboard chrome.
-            </figcaption>
+            </figcaption> */}
           </figure>
         </section>
 
@@ -296,7 +296,7 @@ export default function Home() {
               Feed the desk a repository.
             </h2>
             <p className="font-body text-[1.05rem] leading-8 text-muted-foreground">
-              Paste a GitHub URL, choose a model route, and let the pipeline fetch code, produce the
+              Paste a GitHub URL, choose a model, and let the pipeline fetch code, produce the
               orientation pass, then expand into a deeper editorial read.
             </p>
             <p className="border-t border-black pt-4 font-ui text-sm leading-6 text-muted-foreground">

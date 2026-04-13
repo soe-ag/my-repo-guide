@@ -240,7 +240,7 @@ export default function AnalysisPage() {
                 </Link>
                 <div className="min-w-0 space-y-1">
                   <p className="editorial-kicker text-muted-foreground">Saved analysis</p>
-                  <h1 className="truncate font-display text-[1.9rem] leading-none tracking-[-0.04em] sm:text-[2.4rem]">
+                  <h1 className="font-display text-[1.9rem] leading-[1.15] tracking-[-0.04em] sm:text-[2.4rem]">
                     {analysis.owner}/{analysis.name}
                   </h1>
                   <a
