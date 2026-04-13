@@ -174,27 +174,29 @@ function SavedAnalysesList() {
         {savedAnalyses.map((sa, index) => (
           <li
             key={sa._id}
-            className="grid gap-3 border-t border-black py-3 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
+            className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-t border-black py-2.5 first:border-t-0 sm:gap-3 sm:py-3"
           >
-            <span className="font-display text-3xl leading-none tracking-[-0.04em] text-foreground sm:text-4xl">
+            <span className="font-display text-xl leading-none tracking-[-0.04em] text-foreground sm:text-3xl">
               {String(index + 1).padStart(2, '0')}
             </span>
 
-            <div className="space-y-1">
-              <p className="editorial-kicker text-muted-foreground">Saved analysis</p>
+            <div className="space-y-0.5 sm:space-y-1">
+              <p className="editorial-kicker hidden text-muted-foreground sm:block">
+                Saved analysis
+              </p>
               <Link
                 href={`/analysis/${sa.slug}`}
-                className="font-display text-[1.45rem] leading-[1.02] tracking-[-0.04em] text-foreground transition-colors hover:text-link sm:text-[1.6rem]"
+                className="font-display text-[1rem] leading-[1.1] tracking-[-0.03em] text-foreground transition-colors hover:text-link sm:text-[1.45rem] sm:leading-[1.02] sm:tracking-[-0.04em]"
               >
                 {sa.owner}/{sa.name}
               </Link>
-              <div className="grid gap-x-4 gap-y-1 font-ui text-xs text-muted-foreground sm:grid-cols-2">
+              <div className="grid gap-x-4 gap-y-0.5 font-ui text-xs text-muted-foreground sm:gap-y-1 sm:grid-cols-2">
                 <span>Model: {getModelName(sa.model)}</span>
                 <span>Filed {formatDate(sa.createdAt, true)}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1 sm:justify-self-end">
+            <div className="flex items-center gap-1 justify-self-end">
               <a
                 href={sa.repoUrl}
                 target="_blank"
@@ -239,8 +241,9 @@ export default function Home() {
           <div className="space-y-6">
             {/* <p className="editorial-kicker text-muted-foreground">Repository analysis desk</p> */}
             <div className="space-y-4">
-              <h1 className="font-display text-[3.15rem] leading-[1.02] tracking-[-0.05em] text-foreground sm:text-[4.6rem] lg:max-w-[13ch]">
-                Every codebase, a readable briefing.
+              <h1 className="font-display text-[3.15rem] leading-[1.02] tracking-[-0.05em] text-foreground sm:text-[4.6rem]">
+                Every codebase,
+                <br className="hidden sm:block" /> a readable briefing.
               </h1>
               <p className="max-w-2xl font-body text-[1.12rem] leading-8 text-foreground sm:text-[1.2rem]">
                 RepoGuide turns any public GitHub repository into a readable briefing: structure,

@@ -61,7 +61,7 @@ export default function RootLayout({
               <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-2 text-[11px] uppercase tracking-[0.28em] sm:px-6 lg:px-8">
                 <span className="font-mono">RepoGuide</span>
                 <span className="hidden font-mono sm:inline">
-                  Editorial intelligence for GitHub repositories
+                  {/* Editorial intelligence for GitHub repositories */}
                 </span>
               </div>
             </div>

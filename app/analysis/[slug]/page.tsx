@@ -222,9 +222,9 @@ export default function AnalysisPage() {
 
       <main className="min-w-0 flex-1 lg:border-l lg:border-black">
         <div className="sticky top-0 z-30 border-b border-black bg-background/95 backdrop-blur-sm">
-          <div className="flex items-start justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-            <div className="min-w-0 space-y-3">
-              <div className="flex min-w-0 items-center gap-3">
+          <div className="flex items-center justify-between gap-3 px-3 py-2 sm:items-start sm:gap-4 sm:px-6 sm:py-4 lg:px-8">
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -238,16 +238,18 @@ export default function AnalysisPage() {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                 </Link>
-                <div className="min-w-0 space-y-1">
-                  <p className="editorial-kicker text-muted-foreground">Saved analysis</p>
-                  <h1 className="font-display text-[1.9rem] leading-[1.15] tracking-[-0.04em] sm:text-[2.4rem]">
+                <div className="min-w-0 space-y-0.5 sm:space-y-1">
+                  <p className="editorial-kicker hidden text-muted-foreground sm:block">
+                    Saved analysis
+                  </p>
+                  <h1 className="font-display text-[1.1rem] leading-[1.2] tracking-[-0.03em] sm:text-[1.9rem] sm:leading-[1.15] sm:tracking-[-0.04em] lg:text-[2.4rem]">
                     {analysis.owner}/{analysis.name}
                   </h1>
                   <a
                     href={analysis.repoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="editorial-link inline-flex items-center gap-1 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-foreground"
+                    className="editorial-link hidden items-center gap-1 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-foreground sm:inline-flex"
                   >
                     Open repository
                     <ExternalLink className="h-3 w-3" />
