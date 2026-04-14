@@ -69,7 +69,23 @@ export const getBySlug = query({
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query('savedAnalyses').withIndex('by_createdAt').order('desc').collect()
+    const [savedAnalyses, repos] = await Promise.all([
+      ctx.db.query('savedAnalyses').withIndex('by_createdAt').order('desc').collect(),
+      ctx.db.query('repos').withIndex('by_createdAt').order('desc').collect(),
+    ])
+
+    const repoVisibility = new Map<string, boolean>()
+    for (const repo of repos) {
+      const key = `${repo.owner}/${repo.name}`.toLowerCase()
+      if (!repoVisibility.has(key)) {
+        repoVisibility.set(key, repo.isPrivate)
+      }
+    }
+
+    return savedAnalyses.map((analysis) => ({
+      ...analysis,
+      isPrivate: repoVisibility.get(`${analysis.owner}/${analysis.name}`.toLowerCase()) ?? false,
+    }))
   },
 })
 

@@ -27,6 +27,14 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge variant={variant}>{status}</Badge>
 }
 
+function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
+  return (
+    <Badge variant={isPrivate ? 'outline' : 'secondary'}>
+      {isPrivate ? 'Private repo' : 'Public repo'}
+    </Badge>
+  )
+}
+
 function RepoList() {
   const repos = useQuery(api.repos.listInProgress)
   const removeRepo = useMutation(api.repos.remove)
@@ -85,6 +93,7 @@ function RepoList() {
                     <Clock className="h-3.5 w-3.5" />
                     Started {formatDate(repo.createdAt)}
                   </span>
+                  <VisibilityBadge isPrivate={repo.isPrivate} />
                   <StatusBadge status={repo.status} />
                 </div>
               </div>
@@ -184,6 +193,9 @@ function SavedAnalysesList() {
               <p className="editorial-kicker hidden text-muted-foreground sm:block">
                 Saved analysis
               </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <VisibilityBadge isPrivate={sa.isPrivate} />
+              </div>
               <Link
                 href={`/analysis/${sa.slug}`}
                 className="font-display text-[1rem] leading-[1.1] tracking-[-0.03em] text-foreground transition-colors hover:text-link sm:text-[1.45rem] sm:leading-[1.02] sm:tracking-[-0.04em]"
@@ -246,9 +258,9 @@ export default function Home() {
                 <br className="hidden sm:block" /> a readable briefing.
               </h1>
               <p className="max-w-2xl font-body text-[1.12rem] leading-8 text-foreground sm:text-[1.2rem]">
-                RepoGuide turns any public GitHub repository into a readable briefing: structure,
-                system boundaries, deeper implementation notes, and exportable markdown you can
-                keep.
+                RepoGuide turns public GitHub repositories, and private ones when your token can
+                access them, into a readable briefing: structure, system boundaries, deeper
+                implementation notes, and exportable markdown you can keep.
               </p>
             </div>
 
@@ -268,7 +280,7 @@ export default function Home() {
               <div className="space-y-2 border-t border-black pt-3 sm:border-t-0 sm:pt-0">
                 <p className="editorial-kicker text-muted-foreground">Scope</p>
                 <p className="font-ui text-base font-semibold text-foreground">
-                  Public repositories by default
+                  Public by default, private with token access
                 </p>
               </div>
             </div>
@@ -302,6 +314,12 @@ export default function Home() {
               Paste a GitHub URL, choose a model, and let the pipeline fetch code, produce the
               orientation pass, then expand into a deeper editorial read.
             </p>
+            <Link
+              href="/how-it-works"
+              className="inline-flex items-center font-ui text-sm font-semibold uppercase tracking-[0.14em] text-foreground underline decoration-black underline-offset-4 transition-colors hover:text-link"
+            >
+              See how analysis works
+            </Link>
             <p className="border-t border-black pt-4 font-ui text-sm leading-6 text-muted-foreground">
               Private repository support requires your own GitHub token in the Convex environment as
               <span className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-foreground">

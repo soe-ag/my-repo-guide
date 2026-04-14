@@ -4,6 +4,15 @@ import { v } from 'convex/values'
 import { action } from './_generated/server'
 import { api } from './_generated/api'
 import { FREE_MODELS_ROUTER_ID } from '../lib/constants'
+import {
+  DEEP_DIVE_ROUTE_CHAR_BUDGET,
+  DEEP_DIVE_SCHEMA_CHAR_BUDGET,
+  DEEP_DIVE_SOURCE_CHAR_BUDGET,
+  DEEP_DIVE_SOURCE_FILE_LIMIT,
+  MIN_USABLE_FILES_FOR_ANALYSIS,
+  OPENROUTER_PROMPT_MAX_TOKENS,
+  ORIENTATION_CONFIG_CHAR_BUDGET,
+} from '../lib/analysis-config'
 
 const SCHEMA_PATTERNS = [
   /schema\.(ts|js|prisma)$/,
@@ -104,7 +113,7 @@ async function callOpenRouter(
       },
       { role: 'user', content: prompt },
     ],
-    max_tokens: 1500,
+    max_tokens: OPENROUTER_PROMPT_MAX_TOKENS,
     temperature: 0.3,
   }
 
@@ -190,7 +199,7 @@ export const analyzeRepo = action({
     const fileTreeStr = fileTree.join('\n')
 
     const fetchedCount = Object.keys(fetchedFiles).length
-    if (fileTree.length === 0 || fetchedCount < 8) {
+    if (fileTree.length === 0 || fetchedCount < MIN_USABLE_FILES_FOR_ANALYSIS) {
       await ctx.runMutation(api.repos.updateStatus, {
         repoId: args.repoId,
         status: 'error',
@@ -210,7 +219,7 @@ export const analyzeRepo = action({
       const orientationPrompt = buildOrientationPrompt(
         fileTreeStr,
         packageJson,
-        truncateFiles(configFiles, 25000)
+        truncateFiles(configFiles, ORIENTATION_CONFIG_CHAR_BUDGET)
       )
       const orientationResult = await callAndTrack(orientationPrompt)
 
@@ -234,13 +243,13 @@ export const analyzeRepo = action({
       const sourceFiles = Object.fromEntries(
         Object.entries(fetchedFiles)
           .filter(([path]) => /\.(tsx?|jsx?)$/.test(path) && !excludedPaths.has(path))
-          .slice(0, 8)
+          .slice(0, DEEP_DIVE_SOURCE_FILE_LIMIT)
       )
 
       const deepDivePrompt = buildDeepDivePrompt(
-        truncateFiles(schemaFiles, 15000),
-        truncateFiles(routeFiles, 15000),
-        truncateFiles(sourceFiles, 10000),
+        truncateFiles(schemaFiles, DEEP_DIVE_SCHEMA_CHAR_BUDGET),
+        truncateFiles(routeFiles, DEEP_DIVE_ROUTE_CHAR_BUDGET),
+        truncateFiles(sourceFiles, DEEP_DIVE_SOURCE_CHAR_BUDGET),
         fileTreeStr
       )
       const deepDiveResult = await callAndTrack(deepDivePrompt)

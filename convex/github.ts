@@ -3,6 +3,16 @@
 import { v } from 'convex/values'
 import { action } from './_generated/server'
 import { api } from './_generated/api'
+import {
+  CRITICAL_PATHS,
+  FETCH_BATCH_SIZE,
+  MAX_FETCH_FAILURE_RATIO,
+  MAX_FILES_TO_FETCH,
+  MAX_FILE_SIZE_BYTES,
+  MAX_PER_EXTENSION,
+  MAX_PER_TOP_LEVEL_DIR,
+  MIN_FETCHED_FILES,
+} from '../lib/analysis-config'
 
 const PRIORITY_PATTERNS = [
   /^package\.json$/,
@@ -40,16 +50,6 @@ const DOC_PATTERNS = [
   /^CONTRIBUTING\.md$/i,
   /^CHANGELOG\.md$/i,
 ]
-
-const MAX_FILE_SIZE_BYTES = 120000
-const MAX_FILES_TO_FETCH = 120
-const MAX_PER_TOP_LEVEL_DIR = 18
-const MAX_PER_EXTENSION = 36
-const FETCH_BATCH_SIZE = 12
-const MAX_FETCH_FAILURE_RATIO = 0.4
-const MIN_FETCHED_FILES = 12
-
-const CRITICAL_PATHS = ['package.json', 'README.md', 'readme.md']
 
 const IGNORE_PATTERNS = [
   /node_modules/,

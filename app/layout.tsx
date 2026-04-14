@@ -58,7 +58,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex min-h-full flex-col">
             <div className="border-b-2 border-black bg-black text-white">
-              <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-2 text-[11px] uppercase tracking-[0.28em] sm:px-6 lg:px-8">
+              <div className="mx-auto flex w-full max-w-400 items-center justify-between gap-4 px-4 py-2 text-[11px] uppercase tracking-[0.28em] sm:px-6 lg:px-8">
                 <span className="font-mono">RepoGuide</span>
                 <span className="hidden font-mono sm:inline">
                   {/* Editorial intelligence for GitHub repositories */}
@@ -67,7 +67,7 @@ export default function RootLayout({
             </div>
 
             <header className="border-b border-black bg-background">
-              <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4 py-5 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
+              <div className="mx-auto flex w-full max-w-400 flex-col gap-4 px-4 py-5 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
                 <div className="space-y-2">
                   <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
                     Printed logic for living codebases
@@ -84,6 +84,20 @@ export default function RootLayout({
                   <p className="font-ui text-sm font-medium uppercase tracking-[0.16em] text-muted-foreground">
                     Analyze repositories, export readable briefings, and keep research in motion.
                   </p>
+                  <div className="flex flex-wrap gap-4 text-sm lg:justify-end">
+                    <Link
+                      href="/"
+                      className="font-ui font-medium uppercase tracking-[0.14em] text-foreground transition-colors hover:text-link"
+                    >
+                      Home
+                    </Link>
+                    <Link
+                      href="/how-it-works"
+                      className="font-ui font-medium uppercase tracking-[0.14em] text-foreground transition-colors hover:text-link"
+                    >
+                      How It Works
+                    </Link>
+                  </div>
                 </div>
               </div>
             </header>
@@ -91,7 +105,7 @@ export default function RootLayout({
             <div className="flex-1">{children}</div>
 
             <footer className="mt-16 border-t-2 border-black bg-[#1a1a1a] text-white">
-              <div className="mx-auto grid w-full max-w-[1600px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+              <div className="mx-auto grid w-full max-w-400 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
                 <div className="space-y-3">
                   <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-white/70">
                     Footer Ink
@@ -112,6 +126,12 @@ export default function RootLayout({
                       className="block text-white underline decoration-white/40 underline-offset-4 transition-colors hover:text-link"
                     >
                       Home
+                    </Link>
+                    <Link
+                      href="/how-it-works"
+                      className="block text-white underline decoration-white/40 underline-offset-4 transition-colors hover:text-link"
+                    >
+                      How It Works
                     </Link>
                     <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-white/60">
                       Built with Next.js 16 and Convex
