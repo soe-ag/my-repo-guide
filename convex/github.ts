@@ -197,6 +197,40 @@ interface GitHubTreeItem {
   size?: number
 }
 
+interface GitHubRepoInfo {
+  default_branch?: string
+  private?: boolean
+}
+
+class GitHubApiError extends Error {
+  status: number
+  body: string
+
+  constructor(status: number, body: string) {
+    super(`GitHub API error ${status}: ${body}`)
+    this.status = status
+    this.body = body
+  }
+}
+
+function isRateLimitError(error: unknown): boolean {
+  if (!(error instanceof GitHubApiError)) return false
+  return error.status === 403 && /rate limit/i.test(error.body)
+}
+
+function isNotFoundError(error: unknown): boolean {
+  return error instanceof GitHubApiError && error.status === 404
+}
+
+function buildPrivateRepoAccessError(owner: string, name: string): Error {
+  return new Error(
+    `Private repository ${owner}/${name} was not accessible with GITHUB_ACCESS_TOKEN. ` +
+      'Check that the repo owner/name is correct and that your token can access this repository. ' +
+      'For fine-grained tokens, grant access to this specific repository with Metadata: Read-only and Contents: Read-only. ' +
+      'For classic personal access tokens, use the repo scope.'
+  )
+}
+
 async function githubFetch(url: string, token?: string) {
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
@@ -208,7 +242,7 @@ async function githubFetch(url: string, token?: string) {
   const res = await fetch(url, { headers })
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`GitHub API error ${res.status}: ${body}`)
+    throw new GitHubApiError(res.status, body)
   }
   return res.json()
 }
@@ -220,7 +254,11 @@ async function fetchFileContent(
   branch: string,
   token?: string
 ): Promise<string> {
-  const url = `https://api.github.com/repos/${owner}/${name}/contents/${encodeURIComponent(path)}?ref=${branch}`
+  const encodedPath = path
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/')
+  const url = `https://api.github.com/repos/${owner}/${name}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`
   const data = await githubFetch(url, token)
   if (data.encoding === 'base64' && data.content) {
     return Buffer.from(data.content, 'base64').toString('utf-8')
@@ -238,19 +276,58 @@ export const fetchRepo = action({
     const token = process.env.GITHUB_ACCESS_TOKEN
 
     try {
-      // 1. Fetch repo info
-      const repoInfo = await githubFetch(
-        `https://api.github.com/repos/${args.owner}/${args.name}`,
-        token
-      )
+      // 1. Resolve access mode: public repos unauthenticated, private repos via token.
+      const repoInfoUrl = `https://api.github.com/repos/${args.owner}/${args.name}`
+      let repoInfo: GitHubRepoInfo
+      let activeToken: string | undefined
+
+      try {
+        repoInfo = await githubFetch(repoInfoUrl)
+        activeToken = undefined
+      } catch (publicAccessError) {
+        if (!token) {
+          if (isNotFoundError(publicAccessError)) {
+            throw new Error(
+              `Repository ${args.owner}/${args.name} was not found publicly. ` +
+                'If this is a private repository, add GITHUB_ACCESS_TOKEN in Convex and give that token access to the repo.'
+            )
+          }
+          throw publicAccessError
+        }
+
+        try {
+          repoInfo = await githubFetch(repoInfoUrl, token)
+        } catch (tokenAccessError) {
+          if (isNotFoundError(tokenAccessError)) {
+            throw buildPrivateRepoAccessError(args.owner, args.name)
+          }
+          throw tokenAccessError
+        }
+
+        activeToken = repoInfo.private ? token : undefined
+      }
+
       const defaultBranch = repoInfo.default_branch || 'main'
       const isPrivate = repoInfo.private || false
 
       // 2. Fetch file tree (recursive)
-      const treeData = await githubFetch(
-        `https://api.github.com/repos/${args.owner}/${args.name}/git/trees/${defaultBranch}?recursive=1`,
-        token
-      )
+      let treeData
+      try {
+        treeData = await githubFetch(
+          `https://api.github.com/repos/${args.owner}/${args.name}/git/trees/${defaultBranch}?recursive=1`,
+          activeToken
+        )
+      } catch (error) {
+        if (!activeToken && token && isRateLimitError(error)) {
+          activeToken = token
+          treeData = await githubFetch(
+            `https://api.github.com/repos/${args.owner}/${args.name}/git/trees/${defaultBranch}?recursive=1`,
+            activeToken
+          )
+        } else {
+          throw error
+        }
+      }
 
       const allFiles: GitHubTreeItem[] = (treeData.tree || []).filter(
         (item: GitHubTreeItem) => item.type === 'blob' && !shouldIgnore(item.path)
@@ -275,10 +352,26 @@ export const fetchRepo = action({
                 args.name,
                 path,
                 defaultBranch,
-                token
+                activeToken
               )
               return { path, content, ok: true }
-            } catch {
+            } catch (error) {
+              if (!activeToken && token && isRateLimitError(error)) {
+                try {
+                  activeToken = token
+                  const content = await fetchFileContent(
+                    args.owner,
+                    args.name,
+                    path,
+                    defaultBranch,
+                    activeToken
+                  )
+                  return { path, content, ok: true }
+                } catch {
+                  return { path, content: '', ok: false }
+                }
+              }
+
               return { path, content: '', ok: false }
             }
           })
