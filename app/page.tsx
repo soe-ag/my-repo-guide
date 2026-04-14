@@ -183,17 +183,15 @@ function SavedAnalysesList() {
         {savedAnalyses.map((sa, index) => (
           <li
             key={sa._id}
-            className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-t border-black py-2.5 first:border-t-0 sm:gap-3 sm:py-3"
+            className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2 border-t border-black py-2.5 first:border-t-0 sm:gap-3 sm:py-3"
           >
             <span className="font-display text-xl leading-none tracking-[-0.04em] text-foreground sm:text-3xl">
               {String(index + 1).padStart(2, '0')}
             </span>
 
-            <div className="space-y-0.5 sm:space-y-1">
-              <p className="editorial-kicker hidden text-muted-foreground sm:block">
-                Saved analysis
-              </p>
+            <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
+                <p className="editorial-kicker text-muted-foreground">Saved analysis</p>
                 <VisibilityBadge isPrivate={sa.isPrivate} />
               </div>
               <Link

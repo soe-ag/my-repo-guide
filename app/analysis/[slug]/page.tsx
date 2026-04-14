@@ -5,6 +5,7 @@ import { api } from '@/convex/_generated/api'
 import { useParams, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ArrowLeft, Download, ExternalLink, Copy, Check, Trash2, Menu, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -43,6 +44,14 @@ function extractHeadings(markdown: string): HeadingItem[] {
     }
   }
   return headings
+}
+
+function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
+  return (
+    <Badge variant={isPrivate ? 'outline' : 'secondary'}>
+      {isPrivate ? 'Private repo' : 'Public repo'}
+    </Badge>
+  )
 }
 
 function Sidebar({
@@ -242,6 +251,9 @@ export default function AnalysisPage() {
                   <p className="editorial-kicker hidden text-muted-foreground sm:block">
                     Saved analysis
                   </p>
+                  <div className="hidden sm:block">
+                    <VisibilityBadge isPrivate={analysis.isPrivate} />
+                  </div>
                   <h1 className="font-display text-[1.1rem] leading-[1.2] tracking-[-0.03em] sm:text-[1.9rem] sm:leading-[1.15] sm:tracking-[-0.04em] lg:text-[2.4rem]">
                     {analysis.owner}/{analysis.name}
                   </h1>
@@ -313,6 +325,12 @@ export default function AnalysisPage() {
                 <p className="font-ui text-base font-semibold text-foreground">
                   {headings.length} indexed headings
                 </p>
+              </div>
+              <div>
+                <p className="editorial-kicker text-muted-foreground">Visibility</p>
+                <div className="pt-1">
+                  <VisibilityBadge isPrivate={analysis.isPrivate} />
+                </div>
               </div>
             </div>
           </div>

@@ -59,10 +59,23 @@ export const generateSlug = query({
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const analysis = await ctx.db
       .query('savedAnalyses')
       .withIndex('by_slug', (q) => q.eq('slug', args.slug))
       .first()
+
+    if (!analysis) {
+      return null
+    }
+
+    const repos = await ctx.db.query('repos').withIndex('by_createdAt').order('desc').collect()
+    const key = `${analysis.owner}/${analysis.name}`.toLowerCase()
+    const matchedRepo = repos.find((repo) => `${repo.owner}/${repo.name}`.toLowerCase() === key)
+
+    return {
+      ...analysis,
+      isPrivate: matchedRepo?.isPrivate ?? false,
+    }
   },
 })
 
